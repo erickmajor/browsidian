@@ -52,10 +52,13 @@ useEffect(() => {
 }, [vaultPath])
 ```
 
-**Add** to existing imports (already present from Task 14 — no new imports needed):
-- `loadEnabledPlugins` from `@/plugins/loader`
-- `unloadPlugin` from `@/plugins/loader`
-- `usePluginStore` from `@/plugins/store`
+**Update** the existing loader import in `App.tsx` to also include `unloadPlugin`:
+```typescript
+import { PluginManager } from '@/components/PluginManager'
+import { loadEnabledPlugins, unloadPlugin } from '@/plugins/loader'
+import { usePluginStore } from '@/plugins/store'
+```
+(`loadEnabledPlugins` and `PluginManager` are already imported; `unloadPlugin` and `usePluginStore` are new.)
 
 ### Behavior table
 
