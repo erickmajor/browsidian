@@ -34,6 +34,7 @@ It supports four working modes:
 - Flat, subtle SVG icon set (no external dependencies)
 - App logo + favicon
 - Footer shows app version (from `/api/config` when available)
+- **Plugin support**: Install and run Obsidian community plugins. Open the plugin manager from the ⬡ button in the status bar.
 
 ## Requirements
 
