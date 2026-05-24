@@ -10,7 +10,8 @@ import { Toasts } from '@/components/Toasts'
 import { PromptDialog } from '@/components/Dialogs/PromptDialog'
 import { DropboxPathPicker } from '@/components/Dialogs/DropboxPathPicker'
 import { PluginManager } from '@/components/PluginManager'
-import { loadEnabledPlugins } from '@/plugins/loader'
+import { loadEnabledPlugins, unloadPlugin } from '@/plugins/loader'
+import { usePluginStore } from '@/plugins/store'
 
 declare const __IS_ELECTRON__: boolean
 
@@ -50,13 +51,24 @@ export default function App() {
         }
       } finally {
         setReady(true)
-        if (useVaultStore.getState().vaultPath) {
-          loadEnabledPlugins().catch(() => {})
-        }
       }
     }
     boot()
   }, [])
+
+  // Plugin lifecycle: load on vault connect, unload on vault change/disconnect
+  useEffect(() => {
+    if (!vaultPath) return
+
+    loadEnabledPlugins().catch(() => {})
+
+    return () => {
+      const ids = Array.from(usePluginStore.getState().loaded.keys())
+      for (const id of ids) {
+        unloadPlugin(id).catch(() => {})
+      }
+    }
+  }, [vaultPath])
 
   // Dropbox OAuth callback from popup
   useEffect(() => {
