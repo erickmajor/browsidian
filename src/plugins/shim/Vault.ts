@@ -31,6 +31,8 @@ export class VaultAdapterShim {
     return useVaultStore.getState().vaultPath ?? ''
   }
 
+  // Treats any error (including permission errors) as "not found" — acceptable for the
+  // compatibility shim since adapters don't distinguish error types.
   async exists(path: string): Promise<boolean> {
     try { await getAdapter().readFile(path); return true } catch {}
     try { await getAdapter().listFiles(path); return true } catch {}
@@ -63,6 +65,8 @@ export class VaultAdapterShim {
     }
   }
 
+  // Best-effort: VaultAdapter doesn't expose file metadata; zeros are always returned.
+  // Plugins that rely on timestamps or size will see 0 for these values.
   async stat(path: string): Promise<{ ctime: number; mtime: number; size: number } | null> {
     try { await getAdapter().readFile(path); return { ctime: 0, mtime: 0, size: 0 } }
     catch { return null }
@@ -87,7 +91,11 @@ export class Vault {
   }
 
   _emit(event: VaultEventType, ...args: any[]): void {
-    this._listeners.get(event)?.forEach(cb => { try { cb(...args) } catch {} })
+    this._listeners.get(event)?.forEach(cb => {
+      try { cb(...args) } catch (err) {
+        console.warn(`[vault:${event}] listener error:`, err)
+      }
+    })
   }
 
   async read(file: TFile): Promise<string> { return this.adapter.read(file.path) }
