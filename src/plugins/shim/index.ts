@@ -11,6 +11,7 @@ export {
 export { TFile, TFolder, TAbstractFile } from './types'
 export type { PluginManifest } from './types'
 export { installDomAugmentations } from './dom'
+export { ItemView, FileView, MarkdownView, AbstractInputSuggest } from './views'
 
 declare const __IS_ELECTRON__: boolean
 
@@ -74,6 +75,8 @@ export const moment: any = Object.assign(
     unix: (ts: number) => moment(ts * 1000),
     now: () => Date.now(),
     duration: () => ({ as: () => 0, humanize: () => '' }),
+    locale: (_l?: string) => _l !== undefined ? moment : 'en',
+    isMoment: (obj: any) => !!(obj && typeof obj.format === 'function' && typeof obj.isValid === 'function'),
   }
 )
 
@@ -172,4 +175,72 @@ export class MenuItem {
 export const Keymap = {
   isModEvent: (_e: MouseEvent | KeyboardEvent) => false,
   isModifier: (_e: KeyboardEvent | MouseEvent, _modifier: string) => false,
+}
+
+// ─── Icon registry ────────────────────────────────────────────────────────────
+
+const _iconRegistry = new Map<string, string>()
+
+export function addIcon(iconId: string, svgContent: string): void {
+  _iconRegistry.set(iconId, svgContent)
+}
+
+export function getIcon(iconId: string): SVGSVGElement | null {
+  const svg = _iconRegistry.get(iconId)
+  if (!svg) return null
+  const wrap = document.createElement('div')
+  wrap.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${svg}</svg>`
+  return wrap.firstChild as SVGSVGElement
+}
+
+// ─── requestUrl ───────────────────────────────────────────────────────────────
+
+export interface RequestUrlParam {
+  url: string
+  method?: string
+  headers?: Record<string, string>
+  body?: string | ArrayBuffer
+  contentType?: string
+  throw?: boolean
+}
+
+export interface RequestUrlResponse {
+  status: number
+  headers: Record<string, string>
+  arrayBuffer: ArrayBuffer
+  text: string
+  json: any
+}
+
+export async function requestUrl(options: string | RequestUrlParam): Promise<RequestUrlResponse> {
+  const url        = typeof options === 'string' ? options : options.url
+  const method     = typeof options === 'string' ? 'GET'   : (options.method ?? 'GET')
+  const headers    = typeof options === 'string' ? {}      : (options.headers ?? {})
+  const body       = typeof options === 'string' ? undefined : options.body
+  const throwErr   = typeof options === 'string' ? true    : (options.throw !== false)
+
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body !== undefined
+      ? (typeof body === 'string' ? body : body)
+      : undefined,
+  })
+
+  if (throwErr && !res.ok) {
+    throw new Error(`Request failed: ${res.status} ${res.statusText}`)
+  }
+
+  const arrayBuffer = await res.arrayBuffer()
+  const text = new TextDecoder().decode(arrayBuffer)
+  let json: any = null
+  try { json = JSON.parse(text) } catch {}
+
+  return {
+    status:      res.status,
+    headers:     Object.fromEntries(res.headers.entries()),
+    arrayBuffer,
+    text,
+    json,
+  }
 }

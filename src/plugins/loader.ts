@@ -10,6 +10,11 @@ import type { PluginManifest } from './shim/types'
 // Install DOM augmentations once when this module loads
 installDomAugmentations()
 
+// Expose moment on window so plugins that call window.moment(...) directly work
+if (typeof window !== 'undefined' && !('moment' in window)) {
+  ;(window as any).moment = obsidianShim.moment
+}
+
 // ─── Singleton app object passed to every plugin ───────────────────────────
 
 const vault     = new Vault()
@@ -90,7 +95,8 @@ export async function loadPlugin(
   const fakeRequire = makeRequire(id)
 
   try {
-    const fn = new Function('module', 'exports', 'require', code)
+    const preamble = 'var global=globalThis;var process={env:{},versions:{},platform:"browser"};'
+    const fn = new Function('module', 'exports', 'require', preamble + code)
     fn(mod, mod.exports, fakeRequire)
   } catch (err) {
     throw new Error(`[plugin:${id}] Execution failed: ${(err as Error).message}`)
