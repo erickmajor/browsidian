@@ -1,4 +1,10 @@
 declare global {
+  interface EventTarget {
+    on(event: string, callback: (this: EventTarget, ev: Event) => any, options?: boolean | AddEventListenerOptions): void
+    on(event: string, selector: string, callback: (this: HTMLElement, ev: Event, delegateTarget: HTMLElement) => any, options?: boolean | AddEventListenerOptions): void
+    off(event: string, callback: (this: EventTarget, ev: Event) => any, options?: boolean | EventListenerOptions): void
+    off(event: string, selector: string, callback: (this: HTMLElement, ev: Event, delegateTarget: HTMLElement) => any, options?: boolean | EventListenerOptions): void
+  }
   interface HTMLElement {
     createEl<K extends keyof HTMLElementTagNameMap>(
       tag: K,
@@ -30,6 +36,48 @@ declare global {
 export function installDomAugmentations(): void {
   if ((HTMLElement.prototype as any).__browsidianPatched) return
   ;(HTMLElement.prototype as any).__browsidianPatched = true
+
+  // Obsidian adds .on()/.off() to EventTarget — covers document, window, HTMLElement
+  ;(EventTarget.prototype as any).on = function(
+    this: EventTarget,
+    event: string,
+    selectorOrCallback: string | ((ev: Event) => any),
+    callbackOrOptions?: ((ev: Event, delegateTarget: HTMLElement) => any) | boolean | AddEventListenerOptions,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    if (typeof selectorOrCallback === 'function') {
+      this.addEventListener(event, selectorOrCallback, callbackOrOptions as boolean | AddEventListenerOptions)
+    } else {
+      const selector = selectorOrCallback
+      const cb = callbackOrOptions as (ev: Event, delegateTarget: HTMLElement) => any
+      const handler = (e: Event) => {
+        const target = (e.target as Element)?.closest(selector) as HTMLElement | null
+        if (target) cb.call(target, e, target)
+      }
+      ;(this as any).__obsHandlers ??= new WeakMap()
+      ;(this as any).__obsHandlers.set(cb, handler)
+      this.addEventListener(event, handler, options)
+    }
+  }
+
+  ;(EventTarget.prototype as any).off = function(
+    this: EventTarget,
+    event: string,
+    selectorOrCallback: string | ((ev: Event) => any),
+    callbackOrOptions?: ((ev: Event) => any) | boolean | EventListenerOptions,
+    options?: boolean | EventListenerOptions
+  ): void {
+    if (typeof selectorOrCallback === 'function') {
+      this.removeEventListener(event, selectorOrCallback, callbackOrOptions as boolean | EventListenerOptions)
+    } else {
+      const cb = callbackOrOptions as (ev: Event) => any
+      const handler = (this as any).__obsHandlers?.get(cb)
+      if (handler) {
+        this.removeEventListener(event, handler, options)
+        ;(this as any).__obsHandlers.delete(cb)
+      }
+    }
+  }
 
   HTMLElement.prototype.createEl = function(tag, opts: any = {}) {
     const el = document.createElement(tag)
