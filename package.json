@@ -1,11 +1,68 @@
 {
-  "name": "obsidian-web",
+  "name": "browsidian",
   "private": true,
-  "version": "1.1.13",
-  "description": "Local web app to browse and edit an Obsidian vault in the browser.",
-  "main": "server.js",
+  "version": "1.2.1",
+  "description": "Obsidian vault editor — Web, Electron and CLI",
+  "main": "dist/electron/main.js",
+  "bin": {
+    "browsidian": "./dist/cli/index.js"
+  },
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev:web": "concurrently \"node server.js --port 5174\" \"vite\"",
+    "dev:electron": "cross-env TARGET=electron vite",
+    "dev:cli": "tsx cli/index.ts",
+    "build:web": "vite build --outDir dist/web",
+    "build:electron": "cross-env TARGET=electron vite build && electron-builder",
+    "build:cli": "esbuild cli/index.ts --bundle --platform=node --target=node18 --outfile=dist/cli/index.js --external:electron --banner:js='#!/usr/bin/env node'",
+    "build:all": "npm run build:web && npm run build:cli && npm run build:electron",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.7.1",
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.35.3",
+    "commander": "^12.1.0",
+    "concurrently": "^9.1.2",
+    "ink": "^5.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^10.1.0",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vite-plugin-electron": "^0.28.8"
+  },
+  "build": {
+    "appId": "com.browsidian.app",
+    "productName": "Browsidian",
+    "files": [
+      "dist/**/*",
+      "server.js"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
