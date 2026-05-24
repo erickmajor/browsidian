@@ -2,6 +2,7 @@ import * as obsidianShim from './shim'
 import * as _cmState    from '@codemirror/state'
 import * as _cmView     from '@codemirror/view'
 import * as _cmCommands from '@codemirror/commands'
+import * as _cmLanguage from '@codemirror/language'
 import { installDomAugmentations } from './shim/dom'
 import { Vault } from './shim/Vault'
 import { Workspace } from './shim/Workspace'
@@ -21,6 +22,8 @@ installDomAugmentations()
 
 // Expose moment on window — plugins may call window.moment() or global.moment()
 ;(globalThis as any).moment = obsidianShim.moment
+// app is a global in real Obsidian — set after obsidianApp is defined below
+
 
 // ─── Singleton app object passed to every plugin ───────────────────────────
 
@@ -30,9 +33,10 @@ const metadataCache = new MetadataCache()
 
 const commandRegistry = {
   _cmds: new Map<string, any>(),
-  register(cmd: any)    { this._cmds.set(cmd.id, cmd) },
-  unregister(id: string) { this._cmds.delete(id) },
-  listCommands()         { return Array.from(this._cmds.values()) },
+  register(cmd: any)       { this._cmds.set(cmd.id, cmd) },
+  unregister(id: string)   { this._cmds.delete(id) },
+  removeCommand(id: string){ this._cmds.delete(id) },
+  listCommands()           { return Array.from(this._cmds.values()) },
   executeCommandById(id: string) {
     const cmd = this._cmds.get(id)
     if (cmd?.callback) cmd.callback()
@@ -57,6 +61,9 @@ export const obsidianApp = {
   scope:  { register: () => {}, unregister: () => {} },
 }
 
+// Obsidian exposes the app instance as a global — many plugins reference it directly
+;(globalThis as any).app = obsidianApp
+
 // ─── require() factory ────────────────────────────────────────────────────
 
 const NODE_MODULES = ['fs', 'fs/promises', 'path', 'os', 'child_process', 'net', 'http', 'https', 'crypto', 'stream', 'buffer', 'util', 'events', 'readline']
@@ -67,6 +74,7 @@ function makeRequire(pluginId: string) {
     if (mod === '@codemirror/state')    return _cmState
     if (mod === '@codemirror/view')     return _cmView
     if (mod === '@codemirror/commands') return _cmCommands
+    if (mod === '@codemirror/language') return _cmLanguage
     if (mod === 'electron') return { remote: null, ipcRenderer: null, shell: null }
     if (NODE_MODULES.includes(mod)) {
       throw new Error(
