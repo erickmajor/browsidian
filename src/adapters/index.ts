@@ -29,11 +29,23 @@ export interface VaultAdapter {
 
 // ─── Electron ────────────────────────────────────────────────────────────────
 
+// Vault root set after the user picks a folder; lets ElectronAdapter resolve
+// relative paths without importing the vault store (avoids circular deps).
+let _electronVaultRoot = ''
+export function setElectronVaultRoot(path: string): void { _electronVaultRoot = path }
+
 class ElectronAdapter implements VaultAdapter {
+  // Resolve relative paths against the vault root; leave absolute paths alone.
+  private _abs(p: string): string {
+    if (!_electronVaultRoot) return p
+    if (/^([A-Za-z]:[/\\]|\/)/.test(p)) return p
+    return `${_electronVaultRoot}/${p}`
+  }
+
   selectVault()                              { return window.electronAPI.selectVault() }
-  listFiles(dir: string)                     { return window.electronAPI.listFiles(dir) }
+  listFiles(dir: string)                     { return window.electronAPI.listFiles(this._abs(dir)) }
   async readFile(p: string): Promise<string> {
-    const result = await window.electronAPI.readFile(p)
+    const result = await window.electronAPI.readFile(this._abs(p))
     if (result === null) {
       const err = new Error(`ENOENT: no such file or directory, open '${p}'`) as NodeJS.ErrnoException
       err.code = 'ENOENT'
@@ -41,10 +53,10 @@ class ElectronAdapter implements VaultAdapter {
     }
     return result
   }
-  writeFile(p: string, c: string)            { return window.electronAPI.writeFile(p, c) }
-  deleteFile(p: string)                      { return window.electronAPI.deleteFile(p) }
-  renameFile(o: string, n: string)           { return window.electronAPI.renameFile(o, n) }
-  mkdir(p: string)                           { return window.electronAPI.mkdir(p) }
+  writeFile(p: string, c: string)            { return window.electronAPI.writeFile(this._abs(p), c) }
+  deleteFile(p: string)                      { return window.electronAPI.deleteFile(this._abs(p)) }
+  renameFile(o: string, n: string)           { return window.electronAPI.renameFile(this._abs(o), this._abs(n)) }
+  mkdir(p: string)                           { return window.electronAPI.mkdir(this._abs(p)) }
 }
 
 // ─── Web (File System Access API) ────────────────────────────────────────────
