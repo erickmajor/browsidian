@@ -52,6 +52,14 @@ export class Workspace {
     })
   }
 
+  // Called by many plugins after their setup — invoke immediately since there's no loading phase
+  onLayoutReady(cb: () => void): void { cb() }
+
+  getRightLeaf(_create: boolean): WorkspaceLeaf { return new WorkspaceLeaf() }
+  getLeftLeaf(_create: boolean): WorkspaceLeaf  { return new WorkspaceLeaf() }
+  createLeafBySplit(_leaf: WorkspaceLeaf, _direction?: string, _before?: boolean): WorkspaceLeaf { return new WorkspaceLeaf() }
+  detachLeavesOfType(_type: string): void {}
+
   openLinkText(_text: string, _source: string, _newLeaf?: boolean): Promise<void> {
     return Promise.resolve()
   }
@@ -60,4 +68,5 @@ export class Workspace {
   iterateAllLeaves(_cb: (leaf: WorkspaceLeaf) => void): void {}
   revealLeaf(_leaf: WorkspaceLeaf): void {}
   requestSaveActiveFile(): void {}
+  trigger(_event: string, ..._args: any[]): void {}
 }

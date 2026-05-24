@@ -1,4 +1,7 @@
 import * as obsidianShim from './shim'
+import * as _cmState    from '@codemirror/state'
+import * as _cmView     from '@codemirror/view'
+import * as _cmCommands from '@codemirror/commands'
 import { installDomAugmentations } from './shim/dom'
 import { Vault } from './shim/Vault'
 import { Workspace } from './shim/Workspace'
@@ -61,6 +64,9 @@ const NODE_MODULES = ['fs', 'fs/promises', 'path', 'os', 'child_process', 'net',
 function makeRequire(pluginId: string) {
   return function fakeRequire(mod: string): any {
     if (mod === 'obsidian') return obsidianShim
+    if (mod === '@codemirror/state')    return _cmState
+    if (mod === '@codemirror/view')     return _cmView
+    if (mod === '@codemirror/commands') return _cmCommands
     if (mod === 'electron') return { remote: null, ipcRenderer: null, shell: null }
     if (NODE_MODULES.includes(mod)) {
       throw new Error(

@@ -31,7 +31,6 @@ export class Plugin extends Component {
   }
 
   addRibbonIcon(_icon: string, _title: string, _cb: (evt: MouseEvent) => void): HTMLElement {
-    console.warn(`[plugin:${this.manifest.id}] addRibbonIcon not implemented in web mode`)
     return document.createElement('div')
   }
 
@@ -40,6 +39,15 @@ export class Plugin extends Component {
     el.style.display = 'none'
     return el
   }
+
+  registerView(_type: string, _viewCreator: (leaf: any) => any): void {}
+  registerExtensions(_extensions: string[], _viewType: string): void {}
+  registerMarkdownPostProcessor(_postProcessor: any, _priority?: number): any { return _postProcessor }
+  registerMarkdownCodeBlockProcessor(_language: string, _handler: any, _priority?: number): any { return _handler }
+  registerObsidianProtocolHandler(_action: string, _handler: any): void {}
+  registerCodeMirror(_cb: (cm: any) => void): void {}
+  registerEditorExtension(_extension: any): void {}
+  registerEditorSuggest(_suggest: any): void {}
 
   async loadData(): Promise<any> {
     try {
@@ -51,7 +59,8 @@ export class Plugin extends Component {
       )
       return JSON.parse(content)
     } catch (err) {
-      if (!(err instanceof Error && err.message.includes('not found'))) {
+      const code = (err as any)?.code
+      if (code !== 'ENOENT' && !(err instanceof Error && err.message.includes('not found'))) {
         console.warn(`[plugin:${this.manifest.id}] loadData failed:`, err)
       }
       return {}
