@@ -10,10 +10,14 @@ import type { PluginManifest } from './shim/types'
 // Install DOM augmentations once when this module loads
 installDomAugmentations()
 
-// Expose moment on window so plugins that call window.moment(...) directly work
-if (typeof window !== 'undefined' && !('moment' in window)) {
-  ;(window as any).moment = obsidianShim.moment
-}
+// Polyfill Node.js globals that plugins reference from async callbacks too
+// (preamble in new Function only covers synchronous code during fn() execution)
+;(globalThis as any).global   ??= globalThis
+;(globalThis as any).process  ??= { env: {}, versions: {}, platform: 'browser' }
+;(globalThis as any).Buffer   ??= { from: () => new Uint8Array(), isBuffer: () => false }
+
+// Expose moment on window — plugins may call window.moment() or global.moment()
+;(globalThis as any).moment = obsidianShim.moment
 
 // ─── Singleton app object passed to every plugin ───────────────────────────
 

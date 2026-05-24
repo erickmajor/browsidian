@@ -1,3 +1,19 @@
+export class Events {
+  private _evtHandlers: Map<string, Set<(...args: any[]) => any>> = new Map()
+
+  on(event: string, cb: (...args: any[]) => any): this { return this.addEventListener(event, cb) }
+  off(event: string, cb: (...args: any[]) => any): void { this._evtHandlers.get(event)?.delete(cb) }
+  offref(_ref: any): void {}
+  trigger(event: string, ...args: any[]): void { this._evtHandlers.get(event)?.forEach(cb => { try { cb(...args) } catch {} }) }
+
+  addEventListener(event: string, cb: (...args: any[]) => any): this {
+    if (!this._evtHandlers.has(event)) this._evtHandlers.set(event, new Set())
+    this._evtHandlers.get(event)!.add(cb)
+    return this
+  }
+  removeEventListener(event: string, cb: (...args: any[]) => any): void { this.off(event, cb) }
+}
+
 export class Component {
   private _loaded = false
   private _cleanups: Array<() => void> = []

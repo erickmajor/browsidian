@@ -1,4 +1,4 @@
-export { Component }         from './Component'
+export { Component, Events } from './Component'
 export { Plugin }            from './Plugin'
 export type { Command }      from './Plugin'
 export { Vault, VaultAdapterShim } from './Vault'
