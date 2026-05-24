@@ -172,10 +172,9 @@ export async function unloadPlugin(id: string): Promise<void> {
   if (plugin?.instance) {
     try { plugin.instance.unload() } catch {}
   }
-  // Unregister all commands from this plugin
-  commandRegistry._cmds.forEach((_, cmdId) => {
-    if (cmdId.startsWith(`${id}:`)) commandRegistry.unregister(cmdId)
-  })
+  // Unregister all commands from this plugin (collect first to avoid mutating Map during iteration)
+  const toRemove = Array.from(commandRegistry._cmds.keys()).filter(k => k.startsWith(`${id}:`))
+  for (const k of toRemove) commandRegistry.unregister(k)
   settingTabs.delete(id)
   removeLoaded(id)
   setEnabled(id, false)

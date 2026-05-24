@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { usePluginStore } from '@/plugins/store'
 import { fetchCommunityList, installPlugin } from '@/plugins/registry'
+import { discoverPlugins } from '@/plugins/loader'
 import { useUIStore } from '@/stores/ui'
 import { CommunityPluginCard } from './PluginCard'
 
@@ -13,6 +14,11 @@ export function CommunityTab() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [discoveredIds, setDiscoveredIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    discoverPlugins().then(list => setDiscoveredIds(new Set(list.map(p => p.manifest.id))))
+  }, [loaded.size])
 
   useEffect(() => {
     if (communityFetched) return
@@ -56,7 +62,7 @@ export function CommunityTab() {
           <CommunityPluginCard
             key={plugin.id}
             plugin={plugin}
-            installed={loaded.has(plugin.id)}
+            installed={loaded.has(plugin.id) || discoveredIds.has(plugin.id)}
             installing={installing.has(plugin.id)}
             onInstall={async () => {
               try {

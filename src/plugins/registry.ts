@@ -1,6 +1,7 @@
 import { useVaultStore } from '@/stores/vault'
 import { usePluginStore } from './store'
 import type { CommunityPlugin } from './store'
+import { unloadPlugin } from './loader'
 
 const COMMUNITY_LIST_URL =
   'https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/community-plugins.json'
@@ -58,5 +59,6 @@ export async function installPlugin(plugin: CommunityPlugin): Promise<void> {
 export async function uninstallPlugin(id: string): Promise<void> {
   const adapter = useVaultStore.getState().adapter
   if (!adapter) throw new Error('No vault adapter')
+  await unloadPlugin(id)
   await adapter.deleteFile(`.obsidian/plugins/${id}`)
 }
