@@ -8,6 +8,10 @@ export function StatusBar() {
   const [version, setVersion] = useState('')
 
   useEffect(() => {
+    if (typeof __IS_ELECTRON__ !== 'undefined' && __IS_ELECTRON__) {
+      window.electronAPI.getVersion().then(setVersion).catch(() => {})
+      return
+    }
     fetch('/api/config')
       .then((r) => r.json())
       .then((cfg) => { if (cfg?.version) setVersion(String(cfg.version)) })

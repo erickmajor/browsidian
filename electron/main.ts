@@ -66,7 +66,12 @@ ipcMain.handle('vault:list', async (_e, dirPath: string) => {
 })
 
 ipcMain.handle('vault:read', async (_e, filePath: string) => {
-  return fs.readFile(filePath, 'utf-8')
+  try {
+    return await fs.readFile(filePath, 'utf-8')
+  } catch (err: any) {
+    if (err.code === 'ENOENT') return null
+    throw err
+  }
 })
 
 ipcMain.handle('vault:write', async (_e, filePath: string, content: string) => {
@@ -86,6 +91,8 @@ ipcMain.handle('vault:rename', async (_e, oldPath: string, newPath: string) => {
 ipcMain.handle('vault:mkdir', async (_e, dirPath: string) => {
   await fs.mkdir(dirPath, { recursive: true })
 })
+
+ipcMain.handle('app:version', () => app.getVersion())
 
 // ─── IPC: Plugins ─────────────────────────────────────────────────────────────
 
