@@ -13,7 +13,11 @@ declare global {
 class BaseInputComponent<T> {
   protected _cbs: Array<(v: T) => void> = []
   onChange(cb: (v: T) => void): this { this._cbs.push(cb); return this }
-  protected _fire(v: T): void { this._cbs.forEach(cb => { try { cb(v) } catch {} }) }
+  protected _fire(v: T): void {
+    this._cbs.forEach(cb => {
+      try { cb(v) } catch (err) { console.warn('[Setting] onChange callback error:', err) }
+    })
+  }
 }
 
 export class TextComponent extends BaseInputComponent<string> {
@@ -63,7 +67,11 @@ export class ButtonComponent extends BaseInputComponent<MouseEvent> {
     this.buttonEl.addEventListener('click', (e) => this._fire(e))
   }
   setButtonText(t: string): this { this.buttonEl.textContent = t; return this }
-  setCta(): this { this.buttonEl.className = 'btn btn-primary setting-btn'; return this }
+  setCta(): this {
+    this.buttonEl.classList.remove('btn-secondary')
+    this.buttonEl.classList.add('btn-primary')
+    return this
+  }
   setWarning(): this { this.buttonEl.style.color = 'var(--danger, #e55)'; return this }
   setDisabled(d: boolean): this { this.buttonEl.disabled = d; return this }
   setIcon(_icon: string): this { return this }

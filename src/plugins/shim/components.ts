@@ -66,6 +66,7 @@ export class SuggestModal<T> extends Modal {
     this.inputEl = document.createElement('input')
     this.inputEl.type = 'text'
     this.inputEl.className = 'prompt-input'
+    this.inputEl.addEventListener('input', () => this._render())
     this.resultContainerEl = document.createElement('div')
     this.resultContainerEl.className = 'prompt-results'
     this.contentEl.appendChild(this.inputEl)
@@ -73,7 +74,6 @@ export class SuggestModal<T> extends Modal {
   }
 
   onOpen(): void {
-    this.inputEl.addEventListener('input', () => this._render())
     this.inputEl.focus()
     this._render()
   }
