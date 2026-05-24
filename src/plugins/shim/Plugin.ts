@@ -31,6 +31,7 @@ export class Plugin extends Component {
   }
 
   addRibbonIcon(_icon: string, _title: string, _cb: (evt: MouseEvent) => void): HTMLElement {
+    console.warn(`[plugin:${this.manifest.id}] addRibbonIcon not implemented in web mode`)
     return document.createElement('div')
   }
 
@@ -49,7 +50,10 @@ export class Plugin extends Component {
         `.obsidian/plugins/${this.manifest.id}/data.json`
       )
       return JSON.parse(content)
-    } catch {
+    } catch (err) {
+      if (!(err instanceof Error && err.message.includes('not found'))) {
+        console.warn(`[plugin:${this.manifest.id}] loadData failed:`, err)
+      }
       return {}
     }
   }
@@ -62,10 +66,14 @@ export class Plugin extends Component {
     const path = `.obsidian/plugins/${this.manifest.id}/data.json`
     try {
       await adapter.writeFile(path, json)
-    } catch {
+    } catch (err) {
       if (adapter.mkdir) {
-        await adapter.mkdir(`.obsidian/plugins/${this.manifest.id}`)
-        await adapter.writeFile(path, json)
+        try {
+          await adapter.mkdir(`.obsidian/plugins/${this.manifest.id}`)
+          await adapter.writeFile(path, json)
+        } catch (err) {
+          console.warn(`[plugin:${this.manifest.id}] saveData failed:`, err)
+        }
       }
     }
   }
