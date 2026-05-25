@@ -13,6 +13,7 @@ export class WorkspaceSplit {
 
 export class WorkspaceLeaf {
   view: any = null
+  containerEl: HTMLElement = document.createElement('div')
   open(_view: any): Promise<void> { return Promise.resolve() }
   setViewState(_state: any): Promise<void> { return Promise.resolve() }
   getViewState(): any { return { type: 'markdown', state: {} } }
@@ -24,6 +25,10 @@ type WorkspaceListener = (...args: any[]) => void
 
 export class Workspace {
   activeLeaf: WorkspaceLeaf | null = new WorkspaceLeaf()
+  containerEl: HTMLElement = document.createElement('div')
+  leftSplit  = new WorkspaceSplit()
+  rightSplit = new WorkspaceSplit()
+  rootSplit  = new WorkspaceSplit()
   private _listeners = new Map<string, Set<WorkspaceListener>>()
 
   getActiveFile(): TFile | null {

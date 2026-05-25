@@ -172,4 +172,12 @@ export function installDomAugmentations(): void {
   ;(HTMLElement.prototype as any).findAll = function(selector: string): Element[] {
     return Array.from(this.querySelectorAll(selector))
   }
+
+  ;(HTMLElement.prototype as any).findAllSelf = function(selector: string): Element[] {
+    const results = Array.from(this.querySelectorAll(selector))
+    try { if (this.matches(selector)) results.unshift(this) } catch {}
+    return results
+  }
+
+  ;(HTMLElement.prototype as any).matches ??= (HTMLElement.prototype as any).msMatchesSelector
 }

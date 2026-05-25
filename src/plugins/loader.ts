@@ -55,6 +55,12 @@ export const obsidianApp = {
   metadataCache,
   commands: commandRegistry,
   plugins: {
+    get plugins(): Record<string, any> {
+      const loaded = usePluginStore.getState().loaded
+      const out: Record<string, any> = {}
+      for (const [id, p] of loaded) { if (p.instance) out[id] = p.instance }
+      return out
+    },
     getPlugin:     (id: string) => usePluginStore.getState().loaded.get(id)?.instance ?? null,
     getPluginById: (id: string) => usePluginStore.getState().loaded.get(id)?.instance ?? null,
     enabledPlugins: new Set<string>(),
@@ -81,7 +87,10 @@ export const obsidianApp = {
     off(_event: string, _cb: (...args: any[]) => any): void {},
   },
   internalPlugins: {
-    getPluginById: (_id: string) => ({ enabled: false, instance: null }),
+    getPluginById: (id: string) => {
+      if (id === 'file-explorer') return { enabled: false, instance: { fileItems: new Map<string, any>() } }
+      return { enabled: false, instance: null }
+    },
     getEnabledPluginById: (_id: string) => null,
     plugins: {} as Record<string, any>,
     on: (_event: string, _cb: (...args: any[]) => any) => ({ unsubscribe: () => {} }),
