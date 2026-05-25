@@ -79,7 +79,10 @@ export class Workspace {
   revealLeaf(_leaf: WorkspaceLeaf): void {}
   requestSaveActiveFile(): void {}
   trigger(_event: string, ..._args: any[]): void {}
+  updateOptions(): void {}
   registerHoverLinkSource(_id: string, _info: any): void {}
   unregisterHoverLinkSource(_id: string): void {}
+  getLayout(): any { return {} }
+  changeLayout(_layout: any): void {}
   registerEditorMenuItems?: any
 }

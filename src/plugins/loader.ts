@@ -16,9 +16,12 @@ installDomAugmentations()
 
 // Polyfill Node.js globals that plugins reference from async callbacks too
 // (preamble in new Function only covers synchronous code during fn() execution)
-;(globalThis as any).global   ??= globalThis
-;(globalThis as any).process  ??= { env: {}, versions: {}, platform: 'browser' }
-;(globalThis as any).Buffer   ??= { from: () => new Uint8Array(), isBuffer: () => false }
+;(globalThis as any).global        ??= globalThis
+;(globalThis as any).process       ??= { env: {}, versions: {}, platform: 'browser' }
+;(globalThis as any).Buffer        ??= { from: () => new Uint8Array(), isBuffer: () => false }
+// Obsidian globals referenced directly by some plugins
+;(globalThis as any).activeWindow  ??= window
+;(globalThis as any).activeDocument??= document
 
 // Expose moment on window — plugins may call window.moment() or global.moment()
 ;(globalThis as any).moment = obsidianShim.moment
@@ -73,6 +76,29 @@ export const obsidianApp = {
     unregisterExtensions(extensions: string[]): void {
       extensions.forEach(ext => this.typeByExtension.delete(ext))
     },
+    trigger(_event: string, ..._args: any[]): void {},
+    on(_event: string, _cb: (...args: any[]) => any): any { return { unsubscribe: () => {} } },
+    off(_event: string, _cb: (...args: any[]) => any): void {},
+  },
+  internalPlugins: {
+    getPluginById: (_id: string) => null,
+    getEnabledPluginById: (_id: string) => null,
+    plugins: {} as Record<string, any>,
+  },
+  metadataTypeManager: {
+    _types: new Map<string, string>(),
+    getPropertyInfo(key: string): any {
+      const self = obsidianApp.metadataTypeManager
+      return {
+        type: self._types.get(key) ?? 'text',
+        setType(t: string) { self._types.set(key, t) },
+      }
+    },
+    getAssignedType(key: string): string | null { return obsidianApp.metadataTypeManager._types.get(key) ?? null },
+    setType(key: string, type: string): void { obsidianApp.metadataTypeManager._types.set(key, type) },
+    on(_event: string, _cb: (...args: any[]) => any): any { return { unsubscribe: () => {} } },
+    off(_event: string, _cb: (...args: any[]) => any): void {},
+    trigger(_event: string, ..._args: any[]): void {},
   },
 }
 

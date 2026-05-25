@@ -145,4 +145,31 @@ export function installDomAugmentations(): void {
   HTMLElement.prototype.insertAfter = function(other: Node) {
     other.parentNode?.insertBefore(this, other.nextSibling)
   }
+
+  ;(HTMLElement.prototype as any).getText = function(): string {
+    return this.textContent ?? ''
+  }
+
+  ;(HTMLElement.prototype as any).onClickEvent = function(
+    cb: (evt: MouseEvent) => any,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    this.addEventListener('click', cb as EventListener, options)
+  }
+
+  ;(HTMLElement.prototype as any).trigger = function(eventType: string): void {
+    this.dispatchEvent(new Event(eventType))
+  }
+
+  ;(HTMLElement.prototype as any).getCssPropertyValue = function(prop: string): string {
+    return getComputedStyle(this).getPropertyValue(prop)
+  }
+
+  ;(HTMLElement.prototype as any).find = function(selector: string): Element | null {
+    return this.querySelector(selector)
+  }
+
+  ;(HTMLElement.prototype as any).findAll = function(selector: string): Element[] {
+    return Array.from(this.querySelectorAll(selector))
+  }
 }
