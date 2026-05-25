@@ -31,6 +31,18 @@ export class VaultAdapterShim {
     return useVaultStore.getState().vaultPath ?? ''
   }
 
+  url = {
+    pathToFileURL: (p: string) => {
+      const norm = p.replace(/\\/g, '/')
+      const href = norm.startsWith('/') ? `file://${norm}` : `file:///${norm}`
+      return { href, pathname: norm, toString: () => href }
+    },
+    fileURLToPath: (u: string) => {
+      const s = typeof u === 'string' ? u : ((u as any)?.href ?? '')
+      return s.replace(/^file:\/\/\//, '').replace(/\//g, '\\')
+    },
+  }
+
   // Treats any error (including permission errors) as "not found" — acceptable for the
   // compatibility shim since adapters don't distinguish error types.
   async exists(path: string): Promise<boolean> {

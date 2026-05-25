@@ -1,6 +1,16 @@
 import { useVaultStore } from '@/stores/vault'
 import { TFile } from './types'
 
+export class Scope {
+  register(_modifiers: string[] | null, _key: string | null, _func: (evt: KeyboardEvent) => boolean): any { return {} }
+  unregister(_handler: any): void {}
+}
+
+export class WorkspaceSplit {
+  children: any[] = []
+  type = ''
+}
+
 export class WorkspaceLeaf {
   view: any = null
   open(_view: any): Promise<void> { return Promise.resolve() }

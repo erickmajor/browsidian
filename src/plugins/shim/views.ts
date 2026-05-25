@@ -58,6 +58,45 @@ export class MarkdownView extends FileView {
   showSearch(): void {}
 }
 
+// ─── EditableFileView ─────────────────────────────────────────────────────────
+
+export class EditableFileView extends FileView {
+  canAcceptExtension(_extension: string): boolean { return true }
+  onMoreOptionsMenu(_menu: any): void {}
+  save(_clear?: boolean): Promise<void> { return Promise.resolve() }
+}
+
+// ─── TextFileView ─────────────────────────────────────────────────────────────
+
+export class TextFileView extends EditableFileView {
+  data = ''
+  getViewData(): string { return this.data }
+  setViewData(data: string, _clear: boolean): void { this.data = data }
+  clear(): void { this.data = '' }
+  requestSave(): void {}
+}
+
+// ─── EditorSuggest ────────────────────────────────────────────────────────────
+
+export abstract class EditorSuggest<T> extends Component {
+  context: any = null
+  limit = 100
+  app: any
+
+  constructor(app?: any) {
+    super()
+    this.app = app ?? null
+  }
+
+  abstract getSuggestions(context: any): T[] | Promise<T[]>
+  abstract renderSuggestion(value: T, el: HTMLElement): void
+  abstract selectSuggestion(value: T, evt: MouseEvent | KeyboardEvent): void
+
+  setInstructions(_instructions: any[]): void {}
+  onTrigger(_cursor: any, _editor: any, _file: any): any { return null }
+  close(): void {}
+}
+
 // ─── AbstractInputSuggest ─────────────────────────────────────────────────────
 
 export abstract class AbstractInputSuggest<T> extends Component {
