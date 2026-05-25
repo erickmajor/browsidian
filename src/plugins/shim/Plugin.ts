@@ -1,5 +1,11 @@
 import { Component } from './Component'
 import type { PluginManifest } from './types'
+import {
+  registerCodeBlockProcessor,
+  registerPostProcessor,
+  registerView as _registerView,
+  registerExtension,
+} from '../processorRegistry'
 
 export interface Command {
   id: string
@@ -40,10 +46,24 @@ export class Plugin extends Component {
     return el
   }
 
-  registerView(_type: string, _viewCreator: (leaf: any) => any): void {}
-  registerExtensions(_extensions: string[], _viewType: string): void {}
-  registerMarkdownPostProcessor(_postProcessor: any, _priority?: number): any { return _postProcessor }
-  registerMarkdownCodeBlockProcessor(_language: string, _handler: any, _priority?: number): any { return _handler }
+  registerView(type: string, viewCreator: (leaf: any) => any): void {
+    _registerView(type, viewCreator)
+  }
+
+  registerExtensions(extensions: string[], viewType: string): void {
+    extensions.forEach(ext => registerExtension(ext, viewType))
+  }
+
+  registerMarkdownPostProcessor(postProcessor: any, priority?: number): any {
+    registerPostProcessor(postProcessor, priority)
+    return postProcessor
+  }
+
+  registerMarkdownCodeBlockProcessor(language: string, handler: any, priority?: number): any {
+    registerCodeBlockProcessor(language, handler, priority)
+    return handler
+  }
+
   registerObsidianProtocolHandler(_action: string, _handler: any): void {}
   registerCodeMirror(_cb: (cm: any) => void): void {}
   registerEditorExtension(_extension: any): void {}
