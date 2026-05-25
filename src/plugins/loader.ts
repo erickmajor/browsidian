@@ -59,6 +59,17 @@ export const obsidianApp = {
   },
   keymap: { pushScope: () => {}, popScope: () => {} },
   scope:  { register: () => {}, unregister: () => {} },
+  viewRegistry: {
+    typeByExtension: new Map<string, string>([['md', 'markdown'], ['canvas', 'canvas']]),
+    getTypeByExtension(ext: string): string { return this.typeByExtension.get(ext) ?? '' },
+    isExtensionRegistered(ext: string): boolean { return this.typeByExtension.has(ext) },
+    registerExtensions(extensions: string[], viewType: string): void {
+      extensions.forEach(ext => this.typeByExtension.set(ext, viewType))
+    },
+    unregisterExtensions(extensions: string[]): void {
+      extensions.forEach(ext => this.typeByExtension.delete(ext))
+    },
+  },
 }
 
 // Obsidian exposes the app instance as a global — many plugins reference it directly

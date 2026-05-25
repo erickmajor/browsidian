@@ -44,6 +44,10 @@ export class Component {
     return child
   }
 
+  register(cb: () => void): void {
+    this._cleanups.push(cb)
+  }
+
   registerEvent(ref: { unsubscribe: () => void } | (() => void)): void {
     this._cleanups.push(typeof ref === 'function' ? ref : () => ref.unsubscribe())
   }

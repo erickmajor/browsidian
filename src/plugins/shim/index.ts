@@ -249,6 +249,10 @@ Object.assign(momentFn, {
 
 export const moment: any = momentFn
 
+export function requireApiVersion(_version: string): boolean { return true }
+
+export async function loadMermaid(): Promise<any> { return null }
+
 export function parseFrontMatterEntry(cache: any, key: string): any {
   return cache?.frontmatter?.[key] ?? null
 }
