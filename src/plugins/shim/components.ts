@@ -90,6 +90,9 @@ export class SuggestModal<T> extends Modal {
     }
   }
 
+  setPlaceholder(placeholder: string): void { this.inputEl.placeholder = placeholder }
+  setInstructions(_instructions: Array<{ command: string; purpose: string }>): void {}
+
   getSuggestions(_query: string): T[] | Promise<T[]> { return [] }
   renderSuggestion(_item: T, _el: HTMLElement): void {}
   onChooseSuggestion(_item: T, _evt: MouseEvent | KeyboardEvent): void {}

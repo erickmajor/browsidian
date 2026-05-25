@@ -52,13 +52,17 @@ export const obsidianApp = {
   metadataCache,
   commands: commandRegistry,
   plugins: {
-    getPlugin: (id: string) => usePluginStore.getState().loaded.get(id)?.instance ?? null,
+    getPlugin:     (id: string) => usePluginStore.getState().loaded.get(id)?.instance ?? null,
+    getPluginById: (id: string) => usePluginStore.getState().loaded.get(id)?.instance ?? null,
+    enabledPlugins: new Set<string>(),
     _registerSettingTab: (id: string, tab: any) => settingTabs.set(id, tab),
     _getSettingTab:      (id: string) => settingTabs.get(id),
     _getAllTabs:          () => Array.from(settingTabs.entries()),
   },
   keymap: { pushScope: () => {}, popScope: () => {} },
   scope:  { register: () => {}, unregister: () => {} },
+  loadLocalStorage:  (_key: string) => null,
+  saveLocalStorage:  (_key: string, _val: any) => {},
   viewRegistry: {
     typeByExtension: new Map<string, string>([['md', 'markdown'], ['canvas', 'canvas']]),
     getTypeByExtension(ext: string): string { return this.typeByExtension.get(ext) ?? '' },
@@ -192,6 +196,29 @@ const childProcessStub = {
   fork: (_module: string) => ({ on() { return this }, send() {}, kill() {}, pid: 0 }),
 }
 
+// ─── ES5 class-call compatibility ────────────────────────────────────────
+// TypeScript ES5 plugins inherit via `_super.apply(this, args)`.
+// Native ES6 classes cannot be invoked without `new`, so we wrap every
+// class export with a Proxy whose apply trap calls Reflect.construct,
+// preserving the derived class's prototype chain.
+
+function makeCallable<T extends new (...args: any[]) => any>(Cls: T): T {
+  return new Proxy(Cls, {
+    apply(target: any, thisArg: any, args: any[]) {
+      const derivedCtor = (thisArg as any)?.constructor ?? target
+      return Reflect.construct(target, args, derivedCtor)
+    }
+  }) as T
+}
+
+const obsidianShimCallable = (() => {
+  const out: any = {}
+  for (const [k, v] of Object.entries(obsidianShim as any)) {
+    out[k] = (typeof v === 'function' && /^[A-Z]/.test(k)) ? makeCallable(v as any) : v
+  }
+  return out
+})()
+
 // ─── require() factory ────────────────────────────────────────────────────
 
 const NODE_MODULES = ['net', 'http', 'https', 'crypto', 'stream', 'buffer', 'readline']
@@ -200,7 +227,7 @@ function makeRequire(pluginId: string) {
   const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI
 
   return function fakeRequire(mod: string): any {
-    if (mod === 'obsidian') return obsidianShim
+    if (mod === 'obsidian') return obsidianShimCallable
     if (mod === '@codemirror/state')    return _cmState
     if (mod === '@codemirror/view')     return _cmView
     if (mod === '@codemirror/commands') return _cmCommands
