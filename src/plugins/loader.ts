@@ -75,25 +75,155 @@ export const obsidianApp = {
 // Obsidian exposes the app instance as a global — many plugins reference it directly
 ;(globalThis as any).app = obsidianApp
 
+// ─── Node.js module shims ─────────────────────────────────────────────────
+
+const pathShim = (() => {
+  const s = {
+    join:      (...p: string[]) => p.filter(Boolean).join('/').replace(/[/\\]+/g, '/').replace(/\/$/, '') || '.',
+    resolve:   (...p: string[]) => p.filter(Boolean).join('/').replace(/[/\\]+/g, '/'),
+    dirname:   (p: string) => { const n = p.replace(/\\/g, '/'); const i = n.lastIndexOf('/'); return i >= 0 ? n.slice(0, i) || '/' : '.' },
+    basename:  (p: string, ext?: string) => { const b = p.replace(/\\/g, '/').split('/').pop() ?? ''; return ext && b.endsWith(ext) ? b.slice(0, -ext.length) : b },
+    extname:   (p: string) => { const b = p.replace(/\\/g, '/').split('/').pop() ?? ''; const d = b.lastIndexOf('.'); return d > 0 ? b.slice(d) : '' },
+    normalize: (p: string) => p.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/\/$/, '') || '/',
+    relative:  (_f: string, t: string) => t,
+    isAbsolute:(p: string) => /^([A-Za-z]:[/\\]|\/)/.test(p),
+    sep: '/', delimiter: ':',
+    posix: null as any, win32: null as any,
+  }
+  s.posix = s; s.win32 = s
+  return s
+})()
+
+class _EventEmitter {
+  _h: Map<string, Function[]> = new Map()
+  on(e: string, cb: Function) { if (!this._h.has(e)) this._h.set(e, []); this._h.get(e)!.push(cb); return this }
+  addListener(e: string, cb: Function) { return this.on(e, cb) }
+  off(e: string, cb: Function) { this._h.set(e, (this._h.get(e) ?? []).filter(f => f !== cb)); return this }
+  removeListener(e: string, cb: Function) { return this.off(e, cb) }
+  emit(e: string, ...args: any[]) { (this._h.get(e) ?? []).forEach(cb => { try { cb(...args) } catch {} }); return true }
+  once(e: string, cb: Function) { const w = (...args: any[]) => { this.off(e, w); cb(...args) }; return this.on(e, w) }
+  removeAllListeners(e?: string) { e ? this._h.delete(e) : this._h.clear(); return this }
+  listeners(e: string) { return this._h.get(e) ?? [] }
+  listenerCount(e: string) { return (this._h.get(e) ?? []).length }
+  setMaxListeners() { return this }
+  pipe(dest: any) { return dest }
+}
+const eventsShim = Object.assign(_EventEmitter, { EventEmitter: _EventEmitter })
+
+const osShim = {
+  platform: () => 'win32',
+  homedir:  () => (window as any).electronAPI?.vaultPath?.split(/[/\\]/)[0] + '\\Users\\user' ?? '/',
+  tmpdir:   () => '/tmp',
+  EOL: '\n', arch: () => 'x64', hostname: () => 'localhost',
+  userInfo: () => ({ username: 'user', homedir: '/', shell: '' }),
+  type: () => 'Windows_NT', release: () => '10.0',
+}
+
+function makeElectronFsShim() {
+  const api = (window as any).electronAPI
+  const cb = (opts: any, fallback?: any) => typeof opts === 'function' ? opts : fallback
+  const enoent = (p: string) => { const e: any = new Error(`ENOENT: no such file, open '${p}'`); e.code = 'ENOENT'; return e }
+
+  return {
+    readFile: (p: string, opts: any, cbk?: any) => {
+      const done = cb(opts, cbk)
+      api.readFile(p).then((c: string | null) =>
+        c === null ? done?.(enoent(p)) : done?.(null, c)
+      ).catch((e: Error) => done?.(e))
+    },
+    writeFile: (p: string, data: any, opts: any, cbk?: any) => {
+      const done = cb(opts, cbk)
+      api.writeFile(p, String(data)).then(() => done?.(null)).catch((e: Error) => done?.(e))
+    },
+    mkdir: (p: string, opts: any, cbk?: any) => {
+      const done = cb(opts, cbk)
+      api.mkdir?.(p).then(() => done?.(null)).catch(() => done?.(null))
+    },
+    mkdirSync: (_p: string, _opts?: any) => {},
+    existsSync: (_p: string) => false,
+    readFileSync: (_p: string, _opts?: any) => { throw new Error('fs.readFileSync not available in renderer') },
+    writeFileSync: () => { throw new Error('fs.writeFileSync not available in renderer') },
+    unlink: (p: string, cbk: any) => api.deleteFile(p).then(() => cbk?.(null)).catch(cbk),
+    rename: (f: string, t: string, cbk: any) => api.renameFile(f, t).then(() => cbk?.(null)).catch(cbk),
+    stat: (p: string, cbk: any) => {
+      api.readFile(p).then((c: string | null) =>
+        c === null ? cbk(enoent(p)) : cbk(null, { isFile: () => true, isDirectory: () => false, size: c.length, mtime: new Date(), ctime: new Date() })
+      ).catch(cbk)
+    },
+    lstat(p: string, cbk: any) { return this.stat(p, cbk) },
+    access: (p: string, _mode: any, cbk?: any) => {
+      const done = cb(_mode, cbk)
+      api.readFile(p).then((c: string | null) => c === null ? done?.(enoent(p)) : done?.(null)).catch(done)
+    },
+    createReadStream: (_p: string) => new _EventEmitter(),
+    createWriteStream: (_p: string) => new _EventEmitter(),
+    promises: {
+      readFile: async (p: string) => { const c = await api.readFile(p); if (c === null) throw enoent(p); return c },
+      writeFile: (p: string, data: string) => api.writeFile(p, data),
+      mkdir: (p: string, _opts?: any) => api.mkdir?.(p).catch(() => {}),
+      unlink: (p: string) => api.deleteFile(p),
+      rename: (f: string, t: string) => api.renameFile(f, t),
+      stat: async (p: string) => { const c = await api.readFile(p); if (c === null) throw enoent(p); return { isFile: () => true, isDirectory: () => false, size: c.length, mtime: new Date() } },
+      access: async (p: string) => { const c = await api.readFile(p); if (c === null) throw enoent(p) },
+      readdir: async (_p: string) => [] as string[],
+    }
+  }
+}
+
+const childProcessStub = {
+  exec: (_cmd: string, _opts: any, cbk?: any) => {
+    const done = typeof _opts === 'function' ? _opts : cbk
+    const err: any = new Error('child_process.exec: process spawning not available in renderer')
+    err.code = 127
+    setTimeout(() => done?.(err, '', ''), 0)
+    return { kill() {}, on() { return this }, stdout: new _EventEmitter(), stderr: new _EventEmitter() }
+  },
+  execSync: (_cmd: string) => { throw new Error('child_process.execSync not available in renderer') },
+  spawn: (_cmd: string, _args?: string[], _opts?: any) => {
+    const p = { stdout: new _EventEmitter(), stderr: new _EventEmitter(), stdin: new _EventEmitter(), on(_e: string, _cb: any) { return this }, kill() {}, pid: 0 }
+    return p
+  },
+  spawnSync: (_cmd: string, _args?: string[]) => ({ status: 127, stdout: '', stderr: 'not available', output: [], error: new Error('not available') }),
+  execFile: (_cmd: string, _args: any, _opts: any, cbk?: any) => {
+    const done = typeof _opts === 'function' ? _opts : cbk
+    setTimeout(() => done?.(new Error('execFile not available'), '', ''), 0)
+    return { kill() {}, on() { return this } }
+  },
+  fork: (_module: string) => ({ on() { return this }, send() {}, kill() {}, pid: 0 }),
+}
+
 // ─── require() factory ────────────────────────────────────────────────────
 
-const NODE_MODULES = ['fs', 'fs/promises', 'path', 'os', 'child_process', 'net', 'http', 'https', 'crypto', 'stream', 'buffer', 'util', 'events', 'readline']
+const NODE_MODULES = ['net', 'http', 'https', 'crypto', 'stream', 'buffer', 'readline']
 
 function makeRequire(pluginId: string) {
+  const isElectron = typeof window !== 'undefined' && !!(window as any).electronAPI
+
   return function fakeRequire(mod: string): any {
     if (mod === 'obsidian') return obsidianShim
     if (mod === '@codemirror/state')    return _cmState
     if (mod === '@codemirror/view')     return _cmView
     if (mod === '@codemirror/commands') return _cmCommands
     if (mod === '@codemirror/language') return _cmLanguage
-    if (mod === 'electron') return { remote: null, ipcRenderer: null, shell: null }
-    if (NODE_MODULES.includes(mod)) {
-      throw new Error(
-        `[plugin:${pluginId}] require('${mod}') not available in web mode. ` +
-        `This plugin requires Electron.`
-      )
+    if (mod === 'electron') return { remote: null, ipcRenderer: null, shell: { openExternal: () => {}, openPath: () => {} } }
+    if (mod === 'path')           return pathShim
+    if (mod === 'os')             return osShim
+    if (mod === 'events')         return eventsShim
+    if (mod === 'fs' || mod === 'fs/promises') {
+      if (isElectron) return makeElectronFsShim()
+      throw new Error(`[plugin:${pluginId}] require('${mod}') not available in web mode. This plugin requires Electron.`)
     }
-    // Some plugins bundle their own deps — attempt to return an empty module
+    if (mod === 'child_process') {
+      if (isElectron) return childProcessStub
+      throw new Error(`[plugin:${pluginId}] require('child_process') not available in web mode. This plugin requires Electron.`)
+    }
+    if (NODE_MODULES.includes(mod)) {
+      if (isElectron) {
+        console.warn(`[plugin:${pluginId}] require('${mod}') returning stub in Electron mode`)
+        return {}
+      }
+      throw new Error(`[plugin:${pluginId}] require('${mod}') not available in web mode. This plugin requires Electron.`)
+    }
     console.warn(`[plugin:${pluginId}] Unknown require('${mod}') — returning empty module`)
     return {}
   }
