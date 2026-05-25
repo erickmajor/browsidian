@@ -81,9 +81,12 @@ export const obsidianApp = {
     off(_event: string, _cb: (...args: any[]) => any): void {},
   },
   internalPlugins: {
-    getPluginById: (_id: string) => null,
+    getPluginById: (_id: string) => ({ enabled: false, instance: null }),
     getEnabledPluginById: (_id: string) => null,
     plugins: {} as Record<string, any>,
+    on: (_event: string, _cb: (...args: any[]) => any) => ({ unsubscribe: () => {} }),
+    off: (_event: string, _cb: (...args: any[]) => any) => {},
+    trigger: (_event: string, ..._args: any[]) => {},
   },
   metadataTypeManager: {
     _types: new Map<string, string>(),

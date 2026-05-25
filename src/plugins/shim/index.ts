@@ -297,6 +297,9 @@ export class MetadataCache {
   unresolvedLinks: Record<string, Record<string, number>> = {}
   on(_event: string, _cb: (...args: any[]) => any): { unsubscribe: () => void } { return { unsubscribe: () => {} } }
   off(_event: string, _cb: (...args: any[]) => any): void {}
+  trigger(_event: string, ..._args: any[]): void {}
+  fileToLinktext(_file: any, _sourcePath: string, _omitMdExtension?: boolean): string { return '' }
+  getCache(_path: string): any { return null }
 }
 
 export class Menu {
