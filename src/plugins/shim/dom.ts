@@ -180,4 +180,53 @@ export function installDomAugmentations(): void {
   }
 
   ;(HTMLElement.prototype as any).matches ??= (HTMLElement.prototype as any).msMatchesSelector
+
+  // Obsidian puts these on Node.prototype, covering DocumentFragment and other non-HTMLElement nodes
+  if (!(Node.prototype as any).__browsidianNodePatched) {
+    ;(Node.prototype as any).__browsidianNodePatched = true
+
+    ;(Node.prototype as any).appendText = function(val: string): Node {
+      this.appendChild(document.createTextNode(val))
+      return this
+    }
+
+    ;(Node.prototype as any).getText = function(): string {
+      return this.textContent ?? ''
+    }
+
+    ;(Node.prototype as any).setText = function(val: string): Node {
+      this.textContent = val
+      return this
+    }
+
+    ;(Node.prototype as any).empty = function(): void {
+      while (this.firstChild) this.removeChild(this.firstChild)
+    }
+
+    ;(Node.prototype as any).createEl = function(tag: string, opts: any = {}): HTMLElement {
+      const el = document.createElement(tag)
+      const cls = typeof opts === 'string' ? opts : opts?.cls
+      if (cls) el.className = Array.isArray(cls) ? cls.join(' ') : cls
+      if (opts?.text)        el.textContent = opts.text
+      if (opts?.href)        (el as any).href = opts.href
+      if (opts?.type)        (el as any).type = opts.type
+      if (opts?.placeholder) (el as any).placeholder = opts.placeholder
+      if (opts?.value)       (el as any).value = opts.value
+      if (opts?.title)       el.title = opts.title
+      if (opts?.attr) {
+        for (const [k, v] of Object.entries(opts.attr as Record<string, any>))
+          el.setAttribute(k, String(v))
+      }
+      this.appendChild(el)
+      return el
+    }
+
+    ;(Node.prototype as any).createDiv = function(opts?: any): HTMLDivElement {
+      return (this as any).createEl('div', typeof opts === 'string' ? { cls: opts } : opts)
+    }
+
+    ;(Node.prototype as any).createSpan = function(opts?: any): HTMLSpanElement {
+      return (this as any).createEl('span', typeof opts === 'string' ? { cls: opts } : opts)
+    }
+  }
 }
