@@ -475,14 +475,16 @@ html, body, #root {
 .toggle-side {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  justify-content: center;
+  width: 18px; height: 18px;
   color: var(--muted);
+  transition: color 0.15s, transform 0.15s;
+  flex-shrink: 0;
 }
 .toggle-side-left { order: 0; }
 .toggle-side-right { order: 2; }
-.toggle input:not(:checked) ~ .toggle-side-left { color: var(--text); }
-.toggle input:checked ~ .toggle-side-right { color: var(--text); }
+.toggle input:not(:checked) ~ .toggle-side-left { color: var(--text); transform: scale(1.2); }
+.toggle input:checked ~ .toggle-side-right { color: var(--accent); transform: scale(1.2); }
 
 /* ─── Buttons ────────────────────────────────────────────────────────────── */
 .btn {
