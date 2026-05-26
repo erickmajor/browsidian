@@ -251,8 +251,45 @@ html, body, #root {
 .editor-wrap {
   flex: 1;
   min-height: 0;
-  padding: 14px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-mode-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+
+.editor-mode-tab {
+  padding: 4px 14px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+
+.editor-mode-tab:hover { background: var(--hover-bg); color: var(--text); }
+
+.editor-mode-tab.active {
+  background: var(--active-bg);
+  border-color: var(--active-border);
+  color: var(--text);
+}
+
+.editor-content {
+  flex: 1;
+  min-height: 0;
+  padding: 14px;
   display: flex;
   flex-direction: column;
 }
@@ -278,7 +315,6 @@ html, body, #root {
   background: var(--panel);
   padding: 24px 28px;
   outline: none;
-  cursor: text;
   line-height: 1.55;
 }
 

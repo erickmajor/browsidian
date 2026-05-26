@@ -81,7 +81,6 @@ export function EditorArea() {
     }
   }, [activeFile?.path])
 
-  // Focus CodeMirror when switching to edit mode
   useEffect(() => {
     if (!showPreview && viewRef.current) {
       viewRef.current.focus()
@@ -90,14 +89,18 @@ export function EditorArea() {
 
   const handleBlur = () => {
     if (isDirty) void saveFile()
-    setShowPreview(true)
   }
+
+  const switchToSource = () => setShowPreview(false)
+  const switchToPreview = () => { if (isDirty) void saveFile(); setShowPreview(true) }
 
   if (!activeFile) {
     return (
       <div className="editor-wrap">
-        <div className="preview">
-          <span className="muted">Select a file on the left…</span>
+        <div className="editor-content">
+          <div className="preview">
+            <span className="muted">Select a file on the left…</span>
+          </div>
         </div>
       </div>
     )
@@ -110,15 +113,33 @@ export function EditorArea() {
 
   return (
     <div className="editor-wrap">
-      {hasCustomView ? (
-        <PluginView viewType={customViewType!} filePath={activeFile.path} />
-      ) : showPreview || !isMd ? (
-        <Preview />
-      ) : (
-        <div className="cm-editor-outer" onBlur={handleBlur}>
-          <div ref={containerRef} style={{ height: '100%' }} />
+      {isMd && !hasCustomView && (
+        <div className="editor-mode-tabs">
+          <button
+            className={`editor-mode-tab${!showPreview ? ' active' : ''}`}
+            onClick={switchToSource}
+          >
+            Código
+          </button>
+          <button
+            className={`editor-mode-tab${showPreview ? ' active' : ''}`}
+            onClick={switchToPreview}
+          >
+            Visualização
+          </button>
         </div>
       )}
+      <div className="editor-content">
+        {hasCustomView ? (
+          <PluginView viewType={customViewType!} filePath={activeFile.path} />
+        ) : showPreview || !isMd ? (
+          <Preview />
+        ) : (
+          <div className="cm-editor-outer" onBlur={handleBlur}>
+            <div ref={containerRef} style={{ height: '100%' }} />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
