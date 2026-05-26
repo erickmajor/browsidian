@@ -94,35 +94,24 @@ export function EditorArea() {
   const switchToSource = () => setShowPreview(false)
   const switchToPreview = () => { if (isDirty) void saveFile(); setShowPreview(true) }
 
-  if (!activeFile) {
-    return (
-      <div className="editor-wrap">
-        <div className="editor-content">
-          <div className="preview">
-            <span className="muted">Select a file on the left…</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const isMd = activeFile.name.toLowerCase().endsWith('.md')
-  const ext = activeFile.name.split('.').pop()?.toLowerCase() ?? ''
+  const isMd = activeFile?.name.toLowerCase().endsWith('.md') ?? false
+  const ext  = activeFile?.name.split('.').pop()?.toLowerCase() ?? ''
   const customViewType = registeredExtensions.get(ext)
-  const hasCustomView = !isMd && !!customViewType && registeredViews.has(customViewType)
+  const hasCustomView  = !!activeFile && !isMd && !!customViewType && registeredViews.has(customViewType)
+  const showCmEditor   = !!activeFile && isMd && !showPreview && !hasCustomView
 
   return (
     <div className="editor-wrap">
-      {isMd && !hasCustomView && (
+      {activeFile && isMd && !hasCustomView && (
         <div className="editor-mode-tabs">
           <button
-            className={`editor-mode-tab${!showPreview ? ' active' : ''}`}
+            className={`editor-mode-tab${showCmEditor ? ' active' : ''}`}
             onClick={switchToSource}
           >
             Código
           </button>
           <button
-            className={`editor-mode-tab${showPreview ? ' active' : ''}`}
+            className={`editor-mode-tab${!showCmEditor ? ' active' : ''}`}
             onClick={switchToPreview}
           >
             Visualização
@@ -130,14 +119,28 @@ export function EditorArea() {
         </div>
       )}
       <div className="editor-content">
-        {hasCustomView ? (
-          <PluginView viewType={customViewType!} filePath={activeFile.path} />
-        ) : showPreview || !isMd ? (
-          <Preview />
-        ) : (
-          <div className="cm-editor-outer" onBlur={handleBlur}>
-            <div ref={containerRef} style={{ height: '100%' }} />
-          </div>
+        {/*
+          CodeMirror container is always in the DOM so useEffect([], []) reliably
+          creates the EditorView on mount. Visibility is toggled via display:none.
+        */}
+        <div
+          className="cm-editor-outer"
+          onBlur={handleBlur}
+          style={showCmEditor ? undefined : { display: 'none' }}
+        >
+          <div ref={containerRef} style={{ height: '100%' }} />
+        </div>
+
+        {!showCmEditor && (
+          !activeFile ? (
+            <div className="preview">
+              <span className="muted">Select a file on the left…</span>
+            </div>
+          ) : hasCustomView ? (
+            <PluginView viewType={customViewType!} filePath={activeFile.path} />
+          ) : (
+            <Preview />
+          )
         )}
       </div>
     </div>
