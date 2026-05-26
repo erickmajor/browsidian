@@ -171,7 +171,7 @@ function makeState(
       EditorView.theme({
         '&':            { height: '100%', fontSize: '14px', background: 'var(--panel)' },
         '.cm-scroller': { fontFamily: 'var(--mono)', lineHeight: '1.65', padding: '14px 0' },
-        '.cm-content':  { maxWidth: '760px', margin: '0 auto', padding: '0 28px' },
+        '.cm-content':  { padding: '0 28px' },
         '.cm-gutters':  { background: 'transparent', border: 'none', color: 'var(--muted)' },
       }),
     ],
