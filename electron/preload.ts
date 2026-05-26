@@ -10,7 +10,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   renameFile:  (oldPath: string, newPath: string)  => ipcRenderer.invoke('vault:rename', oldPath, newPath),
   mkdir:       (dirPath: string)                    => ipcRenderer.invoke('vault:mkdir',  dirPath),
   // App
-  getVersion:  ()                              => ipcRenderer.invoke('app:version'),
+  getVersion:    ()                              => ipcRenderer.invoke('app:version'),
+  toggleDevTools: ()                             => ipcRenderer.invoke('devtools:toggle'),
   // Plugins
   loadPlugin:  (pluginDir: string)             => ipcRenderer.invoke('plugin:load',  pluginDir),
 })

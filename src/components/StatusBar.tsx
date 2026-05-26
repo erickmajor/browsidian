@@ -34,6 +34,15 @@ export function StatusBar() {
             GitHub
           </a>
         </div>
+        {typeof __IS_ELECTRON__ !== 'undefined' && __IS_ELECTRON__ && (
+          <button
+            className="btn btn-ghost"
+            title="Toggle DevTools"
+            onClick={() => window.electronAPI.toggleDevTools()}
+          >
+            {'</>'}
+          </button>
+        )}
         <button
           className="btn btn-ghost plugin-manager-btn"
           title="Plugins"

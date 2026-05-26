@@ -25,6 +25,7 @@ interface ElectronAPI {
   mkdir(dirPath: string): Promise<void>
   getVersion(): Promise<string>
   loadPlugin(pluginDir: string): Promise<{ manifest: Record<string, string>; code: string }>
+  toggleDevTools(): Promise<void>
 }
 
 declare interface Window {

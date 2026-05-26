@@ -24,7 +24,6 @@ function createWindow() {
   if (DEV) {
     const devUrl = process.env['VITE_DEV_SERVER_URL'] ?? 'http://localhost:5173'
     win.loadURL(devUrl)
-    win.webContents.openDevTools()
   } else {
     win.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
@@ -93,6 +92,12 @@ ipcMain.handle('vault:mkdir', async (_e, dirPath: string) => {
 })
 
 ipcMain.handle('app:version', () => app.getVersion())
+
+ipcMain.handle('devtools:toggle', (e) => {
+  const wc = e.sender
+  if (wc.isDevToolsOpened()) wc.closeDevTools()
+  else wc.openDevTools()
+})
 
 // ─── IPC: Plugins ─────────────────────────────────────────────────────────────
 
