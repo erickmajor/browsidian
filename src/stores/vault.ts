@@ -110,6 +110,7 @@ interface VaultStore {
   initDemoMode(): Promise<void>
   initDropboxMode(auth: DropboxAuth): Promise<void>
   initElectronMode(): Promise<void>
+  restoreElectronMode(): Promise<boolean>
   disconnect(): Promise<void>
 
   // File ops
@@ -239,14 +240,32 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const adapter = createVaultAdapter()
     const vaultPath = await adapter.selectVault()
     if (!vaultPath) return
+    localStorage.setItem('electronVaultV1', vaultPath)
     setElectronVaultRoot(vaultPath)
     set({ adapter, vaultPath, mode: 'electron' })
     await get().refreshTree()
   },
 
+  async restoreElectronMode(): Promise<boolean> {
+    const saved = localStorage.getItem('electronVaultV1')
+    if (!saved) return false
+    try {
+      const { createVaultAdapter, setElectronVaultRoot } = await import('@/adapters')
+      const adapter = createVaultAdapter()
+      setElectronVaultRoot(saved)
+      set({ adapter, vaultPath: saved, mode: 'electron' })
+      await get().refreshTree()
+      return true
+    } catch {
+      localStorage.removeItem('electronVaultV1')
+      return false
+    }
+  },
+
   async disconnect() {
     get()._cancelAutosave()
     await idbStore.clear().catch(() => {})
+    localStorage.removeItem('electronVaultV1')
     set({
       mode: 'server', adapter: null, vaultPath: null,
       tree: [], activeFile: null, content: '',
