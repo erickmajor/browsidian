@@ -25,6 +25,39 @@ installDomAugmentations()
 
 // Expose moment on window — plugins may call window.moment() or global.moment()
 ;(globalThis as any).moment = obsidianShim.moment
+
+// Obsidian DOM globals — plugins call these directly without require('obsidian')
+;(globalThis as any).createFragment ??= function(cb?: (el: DocumentFragment) => void): DocumentFragment {
+  const frag = document.createDocumentFragment()
+  cb?.(frag)
+  return frag
+}
+;(globalThis as any).createEl ??= function(tag: string, opts?: any, cb?: (el: HTMLElement) => void): HTMLElement {
+  const el = document.createElement(tag)
+  if (opts) {
+    const cls = opts.cls
+    if (cls) el.className = Array.isArray(cls) ? cls.join(' ') : cls
+    if (opts.text)        el.textContent = opts.text
+    if (opts.href)        (el as any).href = opts.href
+    if (opts.type)        (el as any).type = opts.type
+    if (opts.placeholder) (el as any).placeholder = opts.placeholder
+    if (opts.value)       (el as any).value = opts.value
+    if (opts.title)       el.title = opts.title
+    if (opts.attr) {
+      for (const [k, v] of Object.entries(opts.attr as Record<string, any>))
+        el.setAttribute(k, String(v))
+    }
+  }
+  cb?.(el)
+  return el
+}
+;(globalThis as any).createDiv ??= function(opts?: any, cb?: (el: HTMLDivElement) => void): HTMLDivElement {
+  return (globalThis as any).createEl('div', typeof opts === 'string' ? { cls: opts } : opts, cb)
+}
+;(globalThis as any).createSpan ??= function(opts?: any, cb?: (el: HTMLSpanElement) => void): HTMLSpanElement {
+  return (globalThis as any).createEl('span', typeof opts === 'string' ? { cls: opts } : opts, cb)
+}
+
 // app is a global in real Obsidian — set after obsidianApp is defined below
 
 
