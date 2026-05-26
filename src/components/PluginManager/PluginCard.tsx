@@ -5,9 +5,10 @@ interface InstalledCardProps {
   enabled: boolean
   onToggle: (enable: boolean) => void
   onUninstall: () => void
+  onSettings?: () => void
 }
 
-export function InstalledPluginCard({ plugin, enabled, onToggle, onUninstall }: InstalledCardProps) {
+export function InstalledPluginCard({ plugin, enabled, onToggle, onUninstall, onSettings }: InstalledCardProps) {
   return (
     <div className="plugin-card">
       <div className="plugin-card-info">
@@ -31,6 +32,11 @@ export function InstalledPluginCard({ plugin, enabled, onToggle, onUninstall }: 
         )}
       </div>
       <div className="plugin-card-actions">
+        {onSettings && (
+          <button className="btn btn-ghost plugin-settings-btn" title="Configurações" onClick={onSettings}>
+            ⚙
+          </button>
+        )}
         <label className="toggle" title={enabled ? 'Disable plugin' : 'Enable plugin'}>
           <input
             type="checkbox"

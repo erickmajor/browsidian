@@ -6,7 +6,11 @@ import { useUIStore } from '@/stores/ui'
 import { InstalledPluginCard } from './PluginCard'
 import type { PluginManifest } from '@/plugins/shim/types'
 
-export function InstalledTab() {
+interface InstalledTabProps {
+  onOpenSettings: (id: string, name: string) => void
+}
+
+export function InstalledTab({ onOpenSettings }: InstalledTabProps) {
   const { loaded, enabled, removeLoaded } = usePluginStore()
   const { setStatus } = useUIStore()
   const [discovered, setDiscovered] = useState<Array<{ id: string; manifest: PluginManifest }>>([])
@@ -52,6 +56,7 @@ export function InstalledTab() {
                 setStatus(`Uninstall failed: ${(err as Error).message}`)
               }
             }}
+            onSettings={isEnabled ? () => onOpenSettings(id, manifest.name) : undefined}
           />
         )
       })}

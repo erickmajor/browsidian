@@ -756,6 +756,28 @@ html, body, #root {
 .plugin-load-more  { width: 100%; margin-top: 8px; }
 .plugin-community  { display: flex; flex-direction: column; }
 
+.plugin-settings-btn { font-size: 14px; padding: 2px 6px; }
+
+.plugin-settings-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.plugin-settings-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.plugin-settings-title { font-weight: 600; font-size: 13px; }
+
+.plugin-settings-body { flex: 1; overflow-y: auto; }
+
 /* Setting items rendered by plugins */
 .setting-item {
   display: flex;
