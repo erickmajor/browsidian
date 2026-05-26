@@ -4,8 +4,11 @@ const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
 
-const DEFAULT_PORT = 5173;
-const STATIC_DIR = path.join(__dirname, "public");
+const DEFAULT_PORT = 5174;
+const STATIC_DIR = path.join(
+  __dirname,
+  process.env.NODE_ENV === "development" ? "public" : "dist/web"
+);
 const IGNORED_DIRS = new Set([".obsidian", ".git", "node_modules", ".trash", ".DS_Store"]);
 
 async function getAppVersion() {
