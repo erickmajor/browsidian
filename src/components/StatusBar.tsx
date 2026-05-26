@@ -22,6 +22,13 @@ const SunIcon = () => (
   </svg>
 )
 
+const PluginIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 2 L21 7 L21 17 L12 22 L3 17 L3 7 Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+)
+
 export function StatusBar() {
   const { status, theme, toggleTheme } = useUIStore()
   const { setManagerOpen } = usePluginStore()
@@ -68,7 +75,7 @@ export function StatusBar() {
           title="Plugins"
           onClick={() => setManagerOpen(true)}
         >
-          ⬡
+          <PluginIcon />
         </button>
         <label className="toggle" title="Toggle light/dark theme">
           <input
