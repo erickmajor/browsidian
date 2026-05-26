@@ -469,8 +469,8 @@ html, body, #root {
   box-shadow: 0 6px 18px var(--shadow);
   transition: transform 0.15s;
 }
-.toggle input:checked + .toggle-track { background: var(--active-bg); border-color: var(--active-border); }
-.toggle input:checked + .toggle-track::after { transform: translateX(16px); }
+.toggle input:checked ~ .toggle-track { background: var(--active-bg); border-color: var(--active-border); }
+.toggle input:checked ~ .toggle-track::after { transform: translateX(16px); }
 
 .toggle-side {
   display: inline-flex;
