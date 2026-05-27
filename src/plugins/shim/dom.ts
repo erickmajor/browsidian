@@ -165,6 +165,18 @@ export function installDomAugmentations(): void {
     return getComputedStyle(this).getPropertyValue(prop)
   }
 
+  // Obsidian DOM augmentations used by plugins for visibility/lifecycle checks
+  ;(HTMLElement.prototype as any).isShown = function(): boolean {
+    return this.isConnected
+  }
+
+  ;(HTMLElement.prototype as any).onNodeInserted = function(cb: () => void): () => void {
+    if (this.isConnected) Promise.resolve().then(cb)
+    const observer = new MutationObserver(() => { if (this.isConnected) cb() })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }
+
   ;(HTMLElement.prototype as any).find = function(selector: string): Element | null {
     return this.querySelector(selector)
   }
