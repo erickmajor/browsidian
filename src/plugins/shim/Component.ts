@@ -1,8 +1,12 @@
 export class Events {
   private _evtHandlers: Map<string, Set<(...args: any[]) => any>> = new Map()
 
-  on(event: string, cb: (...args: any[]) => any): this { return this.addEventListener(event, cb) }
-  once(event: string, cb: (...args: any[]) => any): this {
+  on(event: string, cb: (...args: any[]) => any): { unsubscribe: () => void } {
+    if (!this._evtHandlers.has(event)) this._evtHandlers.set(event, new Set())
+    this._evtHandlers.get(event)!.add(cb)
+    return { unsubscribe: () => this.off(event, cb) }
+  }
+  once(event: string, cb: (...args: any[]) => any): { unsubscribe: () => void } {
     const wrapper = (...args: any[]) => { this.off(event, wrapper); cb(...args) }
     return this.on(event, wrapper)
   }
@@ -18,7 +22,7 @@ export class Events {
   removeEventListener(event: string, cb: (...args: any[]) => any): void { this.off(event, cb) }
 }
 
-export class Component {
+export class Component extends Events {
   private _loaded = false
   private _cleanups: Array<() => void> = []
   private _children: Component[] = []
