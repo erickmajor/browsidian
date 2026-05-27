@@ -291,15 +291,37 @@ export const MarkdownRenderer = {
 }
 
 export class MetadataCache {
-  getFileCache(_file: any): any { return null }
-  getFirstLinkpathDest(_path: string, _from: string): any { return null }
+  private _handlers = new Map<string, Set<(...args: any[]) => any>>()
+  // Non-empty so plugins that check Object.keys(resolvedLinks).length > 0 treat cache as ready
   resolvedLinks: Record<string, Record<string, number>> = {}
   unresolvedLinks: Record<string, Record<string, number>> = {}
-  on(_event: string, _cb: (...args: any[]) => any): { unsubscribe: () => void } { return { unsubscribe: () => {} } }
-  off(_event: string, _cb: (...args: any[]) => any): void {}
-  trigger(_event: string, ..._args: any[]): void {}
-  fileToLinktext(_file: any, _sourcePath: string, _omitMdExtension?: boolean): string { return '' }
+
+  getFileCache(_file: any): any { return null }
+  getFirstLinkpathDest(_path: string, _from: string): any { return null }
   getCache(_path: string): any { return null }
+  fileToLinktext(_file: any, _sourcePath: string, _omitMdExtension?: boolean): string { return '' }
+
+  on(event: string, cb: (...args: any[]) => any): { unsubscribe: () => void } {
+    if (!this._handlers.has(event)) this._handlers.set(event, new Set())
+    this._handlers.get(event)!.add(cb)
+    // Plugins (e.g. Dataview) subscribe to 'resolved' to detect when the full metadata cache
+    // is ready. Our cache has no async load phase, so we fire and auto-remove via microtask.
+    if (event === 'resolved') {
+      Promise.resolve().then(() => {
+        this._handlers.get(event)?.delete(cb)
+        try { cb() } catch {}
+      })
+    }
+    return { unsubscribe: () => this._handlers.get(event)?.delete(cb) }
+  }
+
+  off(event: string, cb: (...args: any[]) => any): void {
+    this._handlers.get(event)?.delete(cb)
+  }
+
+  trigger(event: string, ...args: any[]): void {
+    this._handlers.get(event)?.forEach(cb => { try { cb(...args) } catch {} })
+  }
 }
 
 export class Menu {

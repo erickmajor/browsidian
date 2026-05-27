@@ -2,6 +2,10 @@ export class Events {
   private _evtHandlers: Map<string, Set<(...args: any[]) => any>> = new Map()
 
   on(event: string, cb: (...args: any[]) => any): this { return this.addEventListener(event, cb) }
+  once(event: string, cb: (...args: any[]) => any): this {
+    const wrapper = (...args: any[]) => { this.off(event, wrapper); cb(...args) }
+    return this.on(event, wrapper)
+  }
   off(event: string, cb: (...args: any[]) => any): void { this._evtHandlers.get(event)?.delete(cb) }
   offref(_ref: any): void {}
   trigger(event: string, ...args: any[]): void { this._evtHandlers.get(event)?.forEach(cb => { try { cb(...args) } catch {} }) }
