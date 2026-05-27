@@ -25,7 +25,8 @@ interface PromptState {
 export default function App() {
   const {
     vaultPath, initServerMode, initBrowserMode, initDemoMode, initDropboxMode,
-    initElectronMode, restoreElectronMode, restoreBrowserMode, newFile, newFolder, disconnect,
+    initElectronMode, restoreElectronMode, restoreBrowserMode, restoreLastFile,
+    newFile, newFolder, disconnect,
   } = useVaultStore()
   const { setStatus } = useUIStore()
   const { startOAuth, finishOAuth, setRootPath, clear: clearDropbox } = useDropboxStore()
@@ -52,6 +53,7 @@ export default function App() {
             await restoreBrowserMode().catch(() => {})
           }
         }
+        await restoreLastFile().catch(() => {})
       } finally {
         setReady(true)
       }

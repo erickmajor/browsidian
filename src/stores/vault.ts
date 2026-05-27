@@ -111,6 +111,7 @@ interface VaultStore {
   initDropboxMode(auth: DropboxAuth): Promise<void>
   initElectronMode(): Promise<void>
   restoreElectronMode(): Promise<boolean>
+  restoreLastFile(): Promise<void>
   disconnect(): Promise<void>
 
   // File ops
@@ -262,10 +263,18 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     }
   },
 
+  async restoreLastFile() {
+    const savedPath = localStorage.getItem('lastActiveFileV1')
+    if (!savedPath || !get().vaultPath) return
+    const name = savedPath.split('/').pop() ?? savedPath
+    await get().openFile({ name, path: savedPath, isDir: false })
+  },
+
   async disconnect() {
     get()._cancelAutosave()
     await idbStore.clear().catch(() => {})
     localStorage.removeItem('electronVaultV1')
+    localStorage.removeItem('lastActiveFileV1')
     set({
       mode: 'server', adapter: null, vaultPath: null,
       tree: [], activeFile: null, content: '',
@@ -296,6 +305,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       showPreview: true,
       selectedDir: parentOf(file.path),
     })
+    localStorage.setItem('lastActiveFileV1', file.path)
   },
 
   async saveFile() {
