@@ -4,6 +4,7 @@ import type { CanvasNodeType, CanvasEdge, Side } from './types'
 
 export interface Viewport { x: number; y: number; zoom: number }
 export interface DragOverride { nodeId: string; x: number; y: number }
+export interface ResizeOverride { nodeId: string; x: number; y: number; width: number; height: number }
 export interface PendingEdge { fromNode: string; fromSide: Side; currentX: number; currentY: number }
 
 interface PanRef { startX: number; startY: number }
@@ -29,6 +30,7 @@ interface UseCanvasResult {
   pendingEdge: PendingEdge | null
   setPendingEdge: Dispatch<SetStateAction<PendingEdge | null>>
   dragOverride: DragOverride | null
+  resizeOverride: ResizeOverride | null
   isPanning: boolean
   viewportRef: React.RefObject<HTMLDivElement>
   handleWheel(e: React.WheelEvent): void
@@ -43,22 +45,31 @@ interface UseCanvasResult {
 }
 
 export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions): UseCanvasResult {
-  const [viewport, setViewport]       = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
-  const [selected, setSelected]       = useState<Set<string>>(new Set())
-  const [pendingEdge, setPendingEdge] = useState<PendingEdge | null>(null)
-  const [dragOverride, setDragOverride] = useState<DragOverride | null>(null)
-  const [isPanning, setIsPanning]     = useState(false)
+  const [viewport, setViewport]           = useState<Viewport>({ x: 0, y: 0, zoom: 1 })
+  const [selected, setSelected]           = useState<Set<string>>(new Set())
+  const [pendingEdge, setPendingEdge]     = useState<PendingEdge | null>(null)
+  const [dragOverride, setDragOverride]   = useState<DragOverride | null>(null)
+  const [resizeOverride, setResizeOverride] = useState<ResizeOverride | null>(null)
+  const [isPanning, setIsPanning]         = useState(false)
 
-  const viewportRef = useRef<HTMLDivElement>(null)
-  const vpRef       = useRef(viewport)
-  const panRef      = useRef<PanRef | null>(null)
-  const dragRef     = useRef<DragRef | null>(null)
-  const resizeRef   = useRef<ResizeRef | null>(null)
-  const portRef     = useRef<{ fromNode: string; fromSide: Side } | null>(null)
-  const dragOverRef = useRef<DragOverride | null>(null)
+  const viewportRef    = useRef<HTMLDivElement>(null)
+  const vpRef          = useRef(viewport)
+  const panRef         = useRef<PanRef | null>(null)
+  const dragRef        = useRef<DragRef | null>(null)
+  const resizeRef      = useRef<ResizeRef | null>(null)
+  const portRef        = useRef<{ fromNode: string; fromSide: Side } | null>(null)
+  const dragOverRef    = useRef<DragOverride | null>(null)
+  const resizeOverRef  = useRef<ResizeOverride | null>(null)
 
-  useEffect(() => { vpRef.current = viewport }, [viewport])
-  useEffect(() => { dragOverRef.current = dragOverride }, [dragOverride])
+  // Fix 2 — store callbacks in refs so dep arrays don't need them
+  const onUpdateNodeRef = useRef(onUpdateNode)
+  const onAddEdgeRef    = useRef(onAddEdge)
+  useEffect(() => { onUpdateNodeRef.current = onUpdateNode }, [onUpdateNode])
+  useEffect(() => { onAddEdgeRef.current    = onAddEdge    }, [onAddEdge])
+
+  useEffect(() => { vpRef.current         = viewport      }, [viewport])
+  useEffect(() => { dragOverRef.current   = dragOverride  }, [dragOverride])
+  useEffect(() => { resizeOverRef.current = resizeOverride }, [resizeOverride])
 
   const screenToWorld = useCallback((clientX: number, clientY: number): { x: number; y: number } => {
     const rect = viewportRef.current?.getBoundingClientRect()
@@ -130,10 +141,10 @@ export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions):
       toSide: side,
       toEnd: 'arrow',
     }
-    onAddEdge(edge)
+    onAddEdgeRef.current(edge)
     portRef.current = null
     setPendingEdge(null)
-  }, [onAddEdge])
+  }, [])
 
   const handleResizeMouseDown = useCallback((
     nodeId: string,
@@ -143,11 +154,13 @@ export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions):
     e.stopPropagation()
     const node = nodes.find(n => n.id === nodeId)
     if (!node) return
+    const origX = node.x, origY = node.y, origW = node.width, origH = node.height
     resizeRef.current = {
       nodeId, handle,
       startMX: e.clientX, startMY: e.clientY,
-      origX: node.x, origY: node.y, origW: node.width, origH: node.height,
+      origX, origY, origW, origH,
     }
+    setResizeOverride({ nodeId, x: origX, y: origY, width: origW, height: origH })
   }, [nodes])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -179,7 +192,7 @@ export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions):
       if (handle.includes('w')) { w = Math.max(80, origW - dx); x = origX + origW - w }
       if (handle.includes('s')) { h = Math.max(60, origH + dy) }
       if (handle.includes('n')) { h = Math.max(60, origH - dy); y = origY + origH - h }
-      onUpdateNode(nodeId, { x, y, width: w, height: h })
+      setResizeOverride({ nodeId, x, y, width: w, height: h })
       return
     }
 
@@ -187,29 +200,35 @@ export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions):
       const world = screenToWorld(e.clientX, e.clientY)
       setPendingEdge(prev => prev ? { ...prev, currentX: world.x, currentY: world.y } : null)
     }
-  }, [onUpdateNode, screenToWorld])
+  }, [screenToWorld])
 
   const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     if (dragRef.current && dragOverRef.current) {
       const { x, y } = dragOverRef.current
-      onUpdateNode(dragRef.current.nodeId, { x, y })
+      onUpdateNodeRef.current(dragRef.current.nodeId, { x, y })
+    }
+    if (resizeRef.current && resizeOverRef.current) {
+      const { nodeId } = resizeRef.current
+      const { x, y, width, height } = resizeOverRef.current
+      onUpdateNodeRef.current(nodeId, { x, y, width, height })
     }
     if (portRef.current) {
       portRef.current = null
       setPendingEdge(null)
     }
-    panRef.current   = null
-    dragRef.current  = null
+    panRef.current    = null
+    dragRef.current   = null
     resizeRef.current = null
     setDragOverride(null)
+    setResizeOverride(null)
     setIsPanning(false)
-  }, [onUpdateNode])
+  }, [])
 
   return {
     viewport, setViewport,
     selected, setSelected,
     pendingEdge, setPendingEdge,
-    dragOverride, isPanning, viewportRef,
+    dragOverride, resizeOverride, isPanning, viewportRef,
     handleWheel, handleBackgroundMouseDown, handleBackgroundClick,
     handleNodeMouseDown, handlePortMouseDown, handlePortMouseUp,
     handleResizeMouseDown, handleMouseMove, handleMouseUp,
