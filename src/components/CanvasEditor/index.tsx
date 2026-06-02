@@ -77,18 +77,18 @@ export function CanvasEditor() {
 
   // ── Callbacks for useCanvas ───────────────────────────────────────────────
   const onUpdateNode = useCallback((id: string, patch: Record<string, unknown>) => {
+    snapshotRef.current = { nodes: nodesRef.current, edges: edgesRef.current }
     setNodes(prev => {
       const next = prev.map(n => n.id === id ? { ...n, ...patch } as CanvasNodeType : n)
-      snapshotRef.current = { nodes: nodesRef.current, edges: edgesRef.current }
       scheduleAutosave(next, edgesRef.current)
       return next
     })
   }, [scheduleAutosave])
 
   const onAddEdge = useCallback((edge: CanvasEdge) => {
+    snapshotRef.current = { nodes: nodesRef.current, edges: edgesRef.current }
     setEdges(prev => {
       const next = [...prev, edge]
-      snapshotRef.current = { nodes: nodesRef.current, edges: edgesRef.current }
       scheduleAutosave(nodesRef.current, next)
       return next
     })
@@ -162,7 +162,7 @@ export function CanvasEditor() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [canvas.selected, selectedEdge, onDeleteNodes, onDeleteEdges, onUndo, canvas])
+  }, [canvas.selected, canvas.setSelected, canvas.setPendingEdge, selectedEdge, onDeleteNodes, onDeleteEdges, onUndo])
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
   const addText = useCallback(() => {
