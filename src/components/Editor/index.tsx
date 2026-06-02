@@ -9,6 +9,7 @@ import { Preview } from '@/components/Preview'
 import { registeredViews, registeredExtensions } from '@/plugins/processorRegistry'
 import { TFile } from '@/plugins/shim/types'
 import { CanvasEditor } from '@/components/CanvasEditor'
+import { ExcalidrawEditor } from '@/components/ExcalidrawEditor'
 
 function PluginView({ viewType, filePath }: { viewType: string; filePath: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -97,6 +98,18 @@ export function EditorArea() {
 
   const isMd = activeFile?.name.toLowerCase().endsWith('.md') ?? false
   const ext  = activeFile?.name.split('.').pop()?.toLowerCase() ?? ''
+
+  const isExcalidraw = !!activeFile && (
+    activeFile.name.endsWith('.excalidraw') ||
+    activeFile.name.endsWith('.excalidraw.md')
+  )
+  if (isExcalidraw) {
+    return (
+      <div className="editor-wrap">
+        <ExcalidrawEditor />
+      </div>
+    )
+  }
 
   if (activeFile && ext === 'canvas') {
     return (
