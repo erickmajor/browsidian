@@ -34,6 +34,7 @@ interface UseCanvasResult {
   isPanning: boolean
   viewportRef: React.RefObject<HTMLDivElement>
   handleWheel(e: React.WheelEvent): void
+  handleWheelNative(e: WheelEvent): void
   handleBackgroundMouseDown(e: React.MouseEvent): void
   handleBackgroundClick(e: React.MouseEvent): void
   handleNodeMouseDown(nodeId: string, e: React.MouseEvent): void
@@ -82,6 +83,22 @@ export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions):
   }, [])
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const rect = viewportRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const vp      = vpRef.current
+    const factor  = e.deltaY < 0 ? 1.1 : 0.9
+    const newZoom = Math.max(0.1, Math.min(3, vp.zoom * factor))
+    const mx = e.clientX - rect.left
+    const my = e.clientY - rect.top
+    setViewport({
+      zoom: newZoom,
+      x: mx - (mx - vp.x) * (newZoom / vp.zoom),
+      y: my - (my - vp.y) * (newZoom / vp.zoom),
+    })
+  }, [])
+
+  const handleWheelNative = useCallback((e: WheelEvent) => {
     e.preventDefault()
     const rect = viewportRef.current?.getBoundingClientRect()
     if (!rect) return
@@ -229,7 +246,7 @@ export function useCanvas({ nodes, onUpdateNode, onAddEdge }: UseCanvasOptions):
     selected, setSelected,
     pendingEdge, setPendingEdge,
     dragOverride, resizeOverride, isPanning, viewportRef,
-    handleWheel, handleBackgroundMouseDown, handleBackgroundClick,
+    handleWheel, handleWheelNative, handleBackgroundMouseDown, handleBackgroundClick,
     handleNodeMouseDown, handlePortMouseDown, handlePortMouseUp,
     handleResizeMouseDown, handleMouseMove, handleMouseUp,
   }

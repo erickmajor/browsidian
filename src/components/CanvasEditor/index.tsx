@@ -35,6 +35,12 @@ export function CanvasEditor() {
   useEffect(() => { nodesRef.current = nodes }, [nodes])
   useEffect(() => { edgesRef.current = edges }, [edges])
 
+  useEffect(() => {
+    return () => {
+      if (autosaveRef.current) clearTimeout(autosaveRef.current)
+    }
+  }, [])
+
   // ── Load ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!activeFile || !adapter) return
@@ -96,16 +102,12 @@ export function CanvasEditor() {
 
   const onDeleteNodes = useCallback((ids: string[]) => {
     const idSet = new Set(ids)
-    setNodes(prevN => {
-      const nextN = prevN.filter(n => !idSet.has(n.id))
-      setEdges(prevE => {
-        const nextE = prevE.filter(e => !idSet.has(e.fromNode) && !idSet.has(e.toNode))
-        snapshotRef.current = { nodes: nodesRef.current, edges: edgesRef.current }
-        scheduleAutosave(nextN, nextE)
-        return nextE
-      })
-      return nextN
-    })
+    snapshotRef.current = { nodes: nodesRef.current, edges: edgesRef.current }
+    const nextN = nodesRef.current.filter(n => !idSet.has(n.id))
+    const nextE = edgesRef.current.filter(e => !idSet.has(e.fromNode) && !idSet.has(e.toNode))
+    setNodes(nextN)
+    setEdges(nextE)
+    scheduleAutosave(nextN, nextE)
   }, [scheduleAutosave])
 
   const onDeleteEdges = useCallback((ids: string[]) => {
@@ -164,6 +166,14 @@ export function CanvasEditor() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [canvas.selected, canvas.setSelected, canvas.setPendingEdge, selectedEdge, onDeleteNodes, onDeleteEdges, onUndo])
 
+  // ── Native wheel listener (passive: false required for preventDefault) ────
+  useEffect(() => {
+    const el = canvas.viewportRef.current
+    if (!el) return
+    el.addEventListener('wheel', canvas.handleWheelNative, { passive: false })
+    return () => el.removeEventListener('wheel', canvas.handleWheelNative)
+  }, [canvas.viewportRef, canvas.handleWheelNative])
+
   // ── Toolbar actions ───────────────────────────────────────────────────────
   const addText = useCallback(() => {
     const c = vpCenter(canvas.viewport, canvas.viewportRef.current)
@@ -210,6 +220,16 @@ export function CanvasEditor() {
   if (!loaded) return <div className="canvas-error"><span>Carregando…</span></div>
   if (error)   return <div className="canvas-error"><span>{error}</span></div>
 
+  const effectiveNodes = nodes.map(n => {
+    if (canvas.dragOverride?.nodeId === n.id) {
+      return { ...n, x: canvas.dragOverride.x, y: canvas.dragOverride.y }
+    }
+    if (canvas.resizeOverride?.nodeId === n.id) {
+      return { ...n, x: canvas.resizeOverride.x, y: canvas.resizeOverride.y, width: canvas.resizeOverride.width, height: canvas.resizeOverride.height }
+    }
+    return n
+  })
+
   const groups = nodes.filter(n => n.type === 'group')
   const others = nodes.filter(n => n.type !== 'group')
   const zoomPct = Math.round(canvas.viewport.zoom * 100)
@@ -238,7 +258,6 @@ export function CanvasEditor() {
         ref={canvas.viewportRef}
         className="canvas-viewport"
         style={{ cursor: canvas.isPanning ? 'grabbing' : 'grab' }}
-        onWheel={canvas.handleWheel}
         onMouseDown={canvas.handleBackgroundMouseDown}
         onClick={canvas.handleBackgroundClick}
         onMouseMove={canvas.handleMouseMove}
@@ -265,7 +284,7 @@ export function CanvasEditor() {
               <CanvasEdgeComponent
                 key={e.id}
                 edge={e}
-                nodes={nodes}
+                nodes={effectiveNodes}
                 markerId={MARKER_ID}
                 selected={selectedEdge === e.id}
                 onClick={() => setSelEdge(prev => prev === e.id ? null : e.id)}
@@ -277,7 +296,7 @@ export function CanvasEditor() {
                 fromSide={canvas.pendingEdge.fromSide}
                 currentX={canvas.pendingEdge.currentX}
                 currentY={canvas.pendingEdge.currentY}
-                nodes={nodes}
+                nodes={effectiveNodes}
               />
             )}
           </svg>
@@ -288,6 +307,7 @@ export function CanvasEditor() {
               key={n.id} node={n}
               selected={canvas.selected.has(n.id)}
               dragOverride={canvas.dragOverride?.nodeId === n.id ? canvas.dragOverride : null}
+              resizeOverride={canvas.resizeOverride?.nodeId === n.id ? canvas.resizeOverride : null}
               onMouseDown={e => canvas.handleNodeMouseDown(n.id, e)}
               onPortMouseDown={(side, e) => canvas.handlePortMouseDown(n.id, side, e)}
               onPortMouseUp={side => canvas.handlePortMouseUp(n.id, side)}
@@ -304,6 +324,7 @@ export function CanvasEditor() {
               key={n.id} node={n}
               selected={canvas.selected.has(n.id)}
               dragOverride={canvas.dragOverride?.nodeId === n.id ? canvas.dragOverride : null}
+              resizeOverride={canvas.resizeOverride?.nodeId === n.id ? canvas.resizeOverride : null}
               onMouseDown={e => canvas.handleNodeMouseDown(n.id, e)}
               onPortMouseDown={(side, e) => canvas.handlePortMouseDown(n.id, side, e)}
               onPortMouseUp={side => canvas.handlePortMouseUp(n.id, side)}

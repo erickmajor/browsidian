@@ -1,7 +1,7 @@
 // src/components/CanvasEditor/CanvasNode.tsx
 import React from 'react'
 import type { CanvasNodeType, Side } from './types'
-import type { DragOverride } from './useCanvas'
+import type { DragOverride, ResizeOverride } from './useCanvas'
 
 const OBSIDIAN_COLORS: Record<string, string> = {
   '1': 'var(--canvas-color-1)',
@@ -32,6 +32,7 @@ interface CanvasNodeProps {
   node: CanvasNodeType
   selected: boolean
   dragOverride: DragOverride | null
+  resizeOverride: ResizeOverride | null
   onMouseDown(e: React.MouseEvent): void
   onPortMouseDown(side: Side, e: React.MouseEvent): void
   onPortMouseUp(side: Side): void
@@ -42,20 +43,22 @@ interface CanvasNodeProps {
 }
 
 export function CanvasNode({
-  node, selected, dragOverride,
+  node, selected, dragOverride, resizeOverride,
   onMouseDown, onPortMouseDown, onPortMouseUp,
   onResizeMouseDown, onDelete, onTextChange, onOpenFile,
 }: CanvasNodeProps) {
-  const x = dragOverride?.x ?? node.x
-  const y = dragOverride?.y ?? node.y
+  const x = resizeOverride?.x ?? dragOverride?.x ?? node.x
+  const y = resizeOverride?.y ?? dragOverride?.y ?? node.y
+  const width  = resizeOverride?.width  ?? node.width
+  const height = resizeOverride?.height ?? node.height
   const isGroup = node.type === 'group'
   const borderColor = resolveColor(node.color)
 
   const style: React.CSSProperties = {
     left: x,
     top: y,
-    width: node.width,
-    height: node.height,
+    width: width,
+    height: height,
     zIndex: isGroup ? 0 : 1,
     ...(borderColor ? { borderColor } : {}),
   }
@@ -85,7 +88,7 @@ export function CanvasNode({
           <textarea
             className="canvas-node__textarea"
             value={node.text}
-            style={{ height: Math.max(40, node.height - 30) }}
+            style={{ height: Math.max(40, height - 30) }}
             onChange={e => onTextChange(e.target.value)}
             onMouseDown={e => e.stopPropagation()}
           />
@@ -130,7 +133,7 @@ export function CanvasNode({
           <div
             key={side}
             className="canvas-port"
-            style={portStyle(side, node.width, node.height)}
+            style={portStyle(side, width, height)}
             onMouseDown={(e) => { e.stopPropagation(); onPortMouseDown(side, e) }}
             onMouseUp={(e) => { e.stopPropagation(); onPortMouseUp(side) }}
           />
