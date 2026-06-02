@@ -36,6 +36,14 @@
 
   --sidebar-width:    340px;
   --titlebar-height:  40px;
+
+  /* Canvas editor — Obsidian color presets */
+  --canvas-color-1: #e03131;
+  --canvas-color-2: #e8590c;
+  --canvas-color-3: #f08c00;
+  --canvas-color-4: #2f9e44;
+  --canvas-color-5: #1971c2;
+  --canvas-color-6: #7048e8;
 }
 
 /* ─── Light theme ────────────────────────────────────────────────────────── */
@@ -838,3 +846,231 @@ html, body, #root {
   font-size: 13px;
 }
 .suggestion-item:hover { background: var(--hover); }
+
+/* ─── Canvas Editor ──────────────────────────────────────────────────────── */
+.btn-sm {
+  padding: 3px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.canvas-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.canvas-toolbar-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.canvas-toolbar-sep { flex: 1; }
+
+.canvas-toolbar-zoom {
+  font-size: 11px;
+  color: var(--text);
+  min-width: 38px;
+  text-align: center;
+  cursor: pointer;
+  padding: 3px 4px;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.canvas-toolbar-zoom:hover { background: var(--hover-bg); }
+
+.canvas-viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.canvas-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  width: 0;
+  height: 0;
+}
+
+.canvas-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100000px;
+  height: 100000px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* ─── Node ─────────────────────────────────────────────────────────────── */
+.canvas-node {
+  position: absolute;
+  background: var(--panel);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+  user-select: none;
+  cursor: grab;
+  min-width: 80px;
+  min-height: 60px;
+}
+
+.canvas-node:active { cursor: grabbing; }
+
+.canvas-node--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.canvas-node--group {
+  background: transparent;
+  border: 2px dashed var(--border);
+  box-shadow: none;
+  cursor: default;
+}
+
+.canvas-node__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.canvas-node__delete {
+  cursor: pointer;
+  opacity: 0.45;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.canvas-node__delete:hover { opacity: 1; color: var(--danger); }
+
+.canvas-node__body {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.canvas-node__textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+}
+
+.canvas-node__group-label {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: var(--bg);
+  padding: 0 6px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.canvas-node__file-icon { font-size: 20px; line-height: 1; }
+.canvas-node__file-name { font-size: 12px; color: var(--text); font-weight: 500; }
+
+.canvas-node__file-open {
+  font-size: 10px;
+  color: var(--accent);
+  cursor: pointer;
+  margin-top: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  display: block;
+}
+
+.canvas-node__file-open:hover { text-decoration: underline; }
+
+/* ─── Ports ────────────────────────────────────────────────────────────── */
+.canvas-node__ports {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.canvas-port {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--panel);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: crosshair;
+  opacity: 0;
+  transition: opacity 0.12s;
+  pointer-events: auto;
+}
+
+.canvas-node:hover .canvas-node__ports { pointer-events: auto; }
+.canvas-node:hover .canvas-port { opacity: 1; }
+
+/* ─── Resize handles ──────────────────────────────────────────────────── */
+.canvas-resize-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border: 1.5px solid var(--panel);
+  border-radius: 2px;
+}
+
+.canvas-resize-handle--nw { top: -4px; left: -4px;     cursor: nw-resize; }
+.canvas-resize-handle--ne { top: -4px; right: -4px;    cursor: ne-resize; }
+.canvas-resize-handle--sw { bottom: -4px; left: -4px;  cursor: sw-resize; }
+.canvas-resize-handle--se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+/* ─── Canvas error / empty ────────────────────────────────────────────── */
+.canvas-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.canvas-hint {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  font-size: 10px;
+  color: var(--muted);
+  pointer-events: none;
+  user-select: none;
+}
