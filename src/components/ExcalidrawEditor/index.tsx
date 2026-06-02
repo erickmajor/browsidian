@@ -57,7 +57,7 @@ function buildMdContent(original: string, json: string): string {
   if (hasBlock) {
     return original.replace(
       /(%%[\s\S]*?```json\s*)([\s\S]*?)(```[\s\S]*?%%)/,
-      `$1\n${json}\n$3`
+      (_match, pre, _old, post) => `${pre}\n${json}\n${post}`
     )
   }
   return (
@@ -92,6 +92,7 @@ export function ExcalidrawEditor() {
   // Load file when activeFile changes
   useEffect(() => {
     if (!activeFile || !adapter) return
+    if (timerRef.current) clearTimeout(timerRef.current)  // cancel pending write from prev file
     setLoaded(false)
     setError(null)
     adapter.readFile(activeFile.path).then(raw => {
