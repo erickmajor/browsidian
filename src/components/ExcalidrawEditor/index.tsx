@@ -99,6 +99,11 @@ export function ExcalidrawEditor() {
       rawRef.current = raw
       const parsed = parseExcalidraw(raw, isMd)
       if (!parsed) {
+        if (isMd && raw.trim() === '') {
+          setData({ elements: [], appState: {}, files: {} })
+          setLoaded(true)
+          return
+        }
         setError('Arquivo Excalidraw inválido ou corrompido.')
         setLoaded(true)
         return
