@@ -106,7 +106,7 @@ export const obsidianApp = {
   loadLocalStorage:  (_key: string) => null,
   saveLocalStorage:  (_key: string, _val: any) => {},
   viewRegistry: {
-    typeByExtension: new Map<string, string>([['md', 'markdown'], ['canvas', 'canvas']]),
+    typeByExtension: new Map<string, string>([['md', 'markdown']]),
     getTypeByExtension(ext: string): string { return this.typeByExtension.get(ext) ?? '' },
     isExtensionRegistered(ext: string): boolean { return this.typeByExtension.has(ext) },
     registerExtensions(extensions: string[], viewType: string): void {

@@ -8,6 +8,7 @@ import { useVaultStore } from '@/stores/vault'
 import { Preview } from '@/components/Preview'
 import { registeredViews, registeredExtensions } from '@/plugins/processorRegistry'
 import { TFile } from '@/plugins/shim/types'
+import { CanvasEditor } from '@/components/CanvasEditor'
 
 function PluginView({ viewType, filePath }: { viewType: string; filePath: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -96,6 +97,15 @@ export function EditorArea() {
 
   const isMd = activeFile?.name.toLowerCase().endsWith('.md') ?? false
   const ext  = activeFile?.name.split('.').pop()?.toLowerCase() ?? ''
+
+  if (activeFile && ext === 'canvas') {
+    return (
+      <div className="editor-wrap">
+        <CanvasEditor />
+      </div>
+    )
+  }
+
   const customViewType = registeredExtensions.get(ext)
   const hasCustomView  = !!activeFile && !isMd && !!customViewType && registeredViews.has(customViewType)
   const showCmEditor   = !!activeFile && isMd && !showPreview && !hasCustomView

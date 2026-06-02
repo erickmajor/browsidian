@@ -35,6 +35,7 @@ It supports four working modes:
 - App logo + favicon
 - Footer shows app version (from `/api/config` when available)
 - **Plugin support**: Install and run Obsidian community plugins. Open the plugin manager from the ⬡ button in the status bar.
+- `.canvas` files — Interactive canvas editor with pan, zoom, drag, node creation (text, file, group), edge drawing, and auto-save. Compatible with Obsidian's JSON Canvas format.
 
 ## Requirements
 
