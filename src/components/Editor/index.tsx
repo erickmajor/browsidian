@@ -78,7 +78,14 @@ export function EditorArea() {
   }, [])
 
   useEffect(() => {
-    const view = viewRef.current
+    const view      = viewRef.current
+    const container = containerRef.current
+    // Re-attach EditorView when the plain-.excalidraw branch (no containerRef div)
+    // unmounts the container and the regular-md branch creates a fresh one.
+    if (view && container && !container.contains(view.dom)) {
+      container.appendChild(view.dom)
+      view.requestMeasure()
+    }
     if (!view) return
     if (view.state.doc.toString() !== content) {
       view.setState(makeState(content, setContent, saveFile))
