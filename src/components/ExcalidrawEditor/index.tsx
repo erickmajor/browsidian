@@ -137,6 +137,36 @@ export function ExcalidrawEditor() {
     }, AUTOSAVE_MS)
   }, [])
 
+  const setExcalidrawAPI = useCallback((api: any) => {
+    excalidrawAPIRef.current = api
+  }, [])
+
+  const renderGridToggle = useCallback((_isMobile: boolean, appState: any) => (
+    <button
+      onClick={() =>
+        excalidrawAPIRef.current?.updateScene({
+          appState: { gridModeEnabled: !appState.gridModeEnabled },
+        })
+      }
+      style={{
+        background: appState.gridModeEnabled ? 'var(--color-primary)' : 'var(--button-gray-1)',
+        color: appState.gridModeEnabled ? '#fff' : 'inherit',
+        border: 'none',
+        borderRadius: '4px',
+        padding: '4px 10px',
+        cursor: 'pointer',
+        fontSize: '13px',
+        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+      }}
+      title="Toggle grid (Ctrl+')"
+    >
+      ⊞ Grid
+    </button>
+  ), [])
+
   if (!loaded) return <div className="canvas-error"><span>Carregando…</span></div>
   if (error)   return <div className="canvas-error"><span>{error}</span></div>
   if (!data)   return null
@@ -146,38 +176,14 @@ export function ExcalidrawEditor() {
       <Suspense fallback={<div className="canvas-error"><span>Carregando Excalidraw…</span></div>}>
         <ExcalidrawLib
           key={activeFile?.path}
-          excalidrawAPI={(api: any) => { excalidrawAPIRef.current = api }}
+          excalidrawAPI={setExcalidrawAPI}
           initialData={{
             elements: data.elements as any,
             appState: { gridSize: 20, gridModeEnabled: true, ...data.appState } as any,
             files:    data.files as any,
           }}
           onChange={onChange as any}
-          renderTopRightUI={(_isMobile: boolean, appState: any) => (
-            <button
-              onClick={() =>
-                excalidrawAPIRef.current?.updateScene({
-                  appState: { gridModeEnabled: !appState.gridModeEnabled },
-                })
-              }
-              style={{
-                background: appState.gridModeEnabled ? 'var(--color-primary)' : 'var(--button-gray-1)',
-                color: appState.gridModeEnabled ? '#fff' : 'inherit',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '4px 10px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-              title="Toggle grid (Ctrl+')"
-            >
-              ⊞ Grid
-            </button>
-          )}
+          renderTopRightUI={renderGridToggle}
         />
       </Suspense>
     </div>
