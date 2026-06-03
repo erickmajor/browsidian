@@ -147,7 +147,7 @@ export function ExcalidrawEditor() {
           key={activeFile?.path}
           initialData={{
             elements: data.elements as any,
-            appState: { gridSize: 20, ...data.appState } as any,
+            appState: { gridSize: 20, gridModeEnabled: true, ...data.appState } as any,
             files:    data.files as any,
           }}
           onChange={onChange as any}
