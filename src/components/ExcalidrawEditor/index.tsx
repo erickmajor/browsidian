@@ -1,3 +1,4 @@
+import '@excalidraw/excalidraw/index.css'
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useVaultStore } from '@/stores/vault'
 
