@@ -76,12 +76,13 @@ export function ExcalidrawEditor() {
   const [loaded, setLoaded] = useState(false)
   const [error, setError]   = useState<string | null>(null)
 
-  const timerRef      = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pendingRef    = useRef<ExcalidrawData>({ elements: [], appState: {}, files: {} })
-  const rawRef        = useRef('')
-  const adapterRef    = useRef(adapter)
-  const activeFileRef = useRef(activeFile)
-  const isMdRef       = useRef(isMd)
+  const timerRef         = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingRef       = useRef<ExcalidrawData>({ elements: [], appState: {}, files: {} })
+  const rawRef           = useRef('')
+  const adapterRef       = useRef(adapter)
+  const activeFileRef    = useRef(activeFile)
+  const isMdRef          = useRef(isMd)
+  const excalidrawAPIRef = useRef<any>(null)
 
   useEffect(() => { adapterRef.current = adapter }, [adapter])
   useEffect(() => { activeFileRef.current = activeFile }, [activeFile])
@@ -145,12 +146,38 @@ export function ExcalidrawEditor() {
       <Suspense fallback={<div className="canvas-error"><span>Carregando Excalidraw…</span></div>}>
         <ExcalidrawLib
           key={activeFile?.path}
+          excalidrawAPI={(api: any) => { excalidrawAPIRef.current = api }}
           initialData={{
             elements: data.elements as any,
             appState: { gridSize: 20, gridModeEnabled: true, ...data.appState } as any,
             files:    data.files as any,
           }}
           onChange={onChange as any}
+          renderTopRightUI={(_isMobile: boolean, appState: any) => (
+            <button
+              onClick={() =>
+                excalidrawAPIRef.current?.updateScene({
+                  appState: { gridModeEnabled: !appState.gridModeEnabled },
+                })
+              }
+              style={{
+                background: appState.gridModeEnabled ? 'var(--color-primary)' : 'var(--button-gray-1)',
+                color: appState.gridModeEnabled ? '#fff' : 'inherit',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '4px 10px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+              title="Toggle grid (Ctrl+')"
+            >
+              ⊞ Grid
+            </button>
+          )}
         />
       </Suspense>
     </div>
