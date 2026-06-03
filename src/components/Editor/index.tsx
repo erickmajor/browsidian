@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
@@ -64,6 +64,8 @@ export function EditorArea() {
   const { activeFile, content, isDirty, showPreview, setContent, saveFile, setShowPreview } = useVaultStore()
   const containerRef = useRef<HTMLDivElement>(null)
   const viewRef      = useRef<EditorView | null>(null)
+  const [showSource,      setShowSource]      = useState(false)
+  const [excalidrawMdKey, setExcalidrawMdKey] = useState(0)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -89,12 +91,21 @@ export function EditorArea() {
     }
   }, [showPreview])
 
+  useEffect(() => { setShowSource(false) }, [activeFile?.path])
+
   const handleBlur = () => {
     if (isDirty) void saveFile()
   }
 
   const switchToSource = () => setShowPreview(false)
   const switchToPreview = () => { if (isDirty) void saveFile(); setShowPreview(true) }
+
+  const switchToExcalidrawTab = () => {
+    if (isDirty) void saveFile()
+    setExcalidrawMdKey(k => k + 1)
+    setShowSource(false)
+  }
+  const switchToSourceTab = () => setShowSource(true)
 
   const isMd = activeFile?.name.toLowerCase().endsWith('.md') ?? false
   const ext  = activeFile?.name.split('.').pop()?.toLowerCase() ?? ''
@@ -103,6 +114,38 @@ export function EditorArea() {
     activeFile.name.endsWith('.excalidraw') ||
     activeFile.name.endsWith('.excalidraw.md')
   )
+
+  if (isExcalidraw && isMd) {
+    return (
+      <div className="editor-wrap">
+        <div className="editor-mode-tabs">
+          <button
+            className={`editor-mode-tab${!showSource ? ' active' : ''}`}
+            onClick={switchToExcalidrawTab}
+          >
+            Excalidraw
+          </button>
+          <button
+            className={`editor-mode-tab${showSource ? ' active' : ''}`}
+            onClick={switchToSourceTab}
+          >
+            Código
+          </button>
+        </div>
+        <div className="editor-content">
+          <div
+            className="cm-editor-outer"
+            onBlur={handleBlur}
+            style={showSource ? undefined : { display: 'none' }}
+          >
+            <div ref={containerRef} style={{ height: '100%' }} />
+          </div>
+          {!showSource && <ExcalidrawEditor key={excalidrawMdKey} />}
+        </div>
+      </div>
+    )
+  }
+
   if (isExcalidraw) {
     return (
       <div className="editor-wrap">
