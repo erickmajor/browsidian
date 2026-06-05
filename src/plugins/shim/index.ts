@@ -296,6 +296,7 @@ export class MetadataCache {
   private _cache    = new Map<string, CachedMetadata>()
   private _resolvedCallbacks: Array<() => void> = []
   private _resolvedFired = false
+  private _populateGen = 0
 
   // Non-empty so plugins that check Object.keys(resolvedLinks).length > 0 treat cache as ready
   resolvedLinks: Record<string, Record<string, number>> = {}
@@ -349,8 +350,10 @@ export class MetadataCache {
   }
 
   async populate(files: any[], read: (path: string) => Promise<string>): Promise<void> {
+    const gen = this._populateGen
     const BATCH = 20
     for (let i = 0; i < files.length; i += BATCH) {
+      if (this._populateGen !== gen) return
       const batch = files.slice(i, i + BATCH)
       await Promise.all(batch.map(async (file: any) => {
         try {
@@ -363,7 +366,7 @@ export class MetadataCache {
         }
       }))
     }
-    this._fireResolved()
+    if (this._populateGen === gen) this._fireResolved()
   }
 
   updateFile(file: { path: string }, content: string): void {
@@ -380,6 +383,7 @@ export class MetadataCache {
   reset(): void {
     this._cache.clear()
     this._resolvedFired = false
+    this._populateGen++
   }
 }
 

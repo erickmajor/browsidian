@@ -158,13 +158,21 @@ export async function populateMetadataCache(): Promise<void> {
     return
   }
   const files = vault.getMarkdownFiles()
-  const populate = metadataCache.populate(files, (p: string) => adapter.readFile(p))
-  const timeout = new Promise<void>(resolve => setTimeout(() => {
-    console.warn('[MetadataCache] populate timeout — firing resolved anyway')
+  if (files.length === 0) {
+    console.warn('[MetadataCache] no markdown files found — vault tree may not be ready')
     metadataCache._fireResolved()
-    resolve()
-  }, 30_000))
-  await Promise.race([populate, timeout])
+    return
+  }
+  let timerId: ReturnType<typeof setTimeout>
+  const timeout = new Promise<void>(resolve => {
+    timerId = setTimeout(() => {
+      console.warn('[MetadataCache] populate timeout — firing resolved anyway')
+      metadataCache._fireResolved()
+      resolve()
+    }, 30_000)
+  })
+  await Promise.race([metadataCache.populate(files, (p: string) => adapter.readFile(p)), timeout])
+  clearTimeout(timerId!)
 }
 
 // ─── Node.js module shims ─────────────────────────────────────────────────
