@@ -65,7 +65,7 @@ installDomAugmentations()
 
 const vault     = new Vault()
 const workspace = new Workspace()
-const metadataCache = new MetadataCache()
+export const metadataCache = new MetadataCache()
 
 const commandRegistry = {
   _cmds: new Map<string, any>(),
@@ -149,6 +149,23 @@ export const obsidianApp = {
 
 // Obsidian exposes the app instance as a global — many plugins reference it directly
 ;(globalThis as any).app = obsidianApp
+
+export async function populateMetadataCache(): Promise<void> {
+  metadataCache.reset()
+  const { adapter } = useVaultStore.getState()
+  if (!adapter) {
+    metadataCache._fireResolved()
+    return
+  }
+  const files = vault.getMarkdownFiles()
+  const populate = metadataCache.populate(files, (p: string) => adapter.readFile(p))
+  const timeout = new Promise<void>(resolve => setTimeout(() => {
+    console.warn('[MetadataCache] populate timeout — firing resolved anyway')
+    metadataCache._fireResolved()
+    resolve()
+  }, 30_000))
+  await Promise.race([populate, timeout])
+}
 
 // ─── Node.js module shims ─────────────────────────────────────────────────
 
