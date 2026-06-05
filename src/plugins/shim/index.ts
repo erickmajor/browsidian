@@ -1,3 +1,4 @@
+import { parseFileCache, type CachedMetadata } from './metadata-parser'
 export { Component, Events, MarkdownRenderChild } from './Component'
 export { Plugin }            from './Plugin'
 export type { Command }      from './Plugin'
@@ -292,35 +293,90 @@ export const MarkdownRenderer = {
 
 export class MetadataCache {
   private _handlers = new Map<string, Set<(...args: any[]) => any>>()
+  private _cache    = new Map<string, CachedMetadata>()
+  private _resolvedCallbacks: Array<() => void> = []
+  private _resolvedFired = false
+
   // Non-empty so plugins that check Object.keys(resolvedLinks).length > 0 treat cache as ready
   resolvedLinks: Record<string, Record<string, number>> = {}
   unresolvedLinks: Record<string, Record<string, number>> = {}
 
-  getFileCache(_file: any): any { return null }
+  getFileCache(file: any): CachedMetadata | null {
+    return this._cache.get(file?.path ?? '') ?? null
+  }
+
   getFirstLinkpathDest(_path: string, _from: string): any { return null }
-  getCache(_path: string): any { return null }
+
+  getCache(path: string): CachedMetadata | null {
+    return this._cache.get(path) ?? null
+  }
+
   fileToLinktext(_file: any, _sourcePath: string, _omitMdExtension?: boolean): string { return '' }
 
   on(event: string, cb: (...args: any[]) => any): { unsubscribe: () => void } {
+    if (event === 'resolved') {
+      if (this._resolvedFired) {
+        Promise.resolve().then(() => { try { cb() } catch {} })
+      } else {
+        this._resolvedCallbacks.push(cb)
+      }
+      return { unsubscribe: () => {
+        this._resolvedCallbacks = this._resolvedCallbacks.filter(f => f !== cb)
+      }}
+    }
     if (!this._handlers.has(event)) this._handlers.set(event, new Set())
     this._handlers.get(event)!.add(cb)
-    // Plugins (e.g. Dataview) subscribe to 'resolved' to detect when the full metadata cache
-    // is ready. Our cache has no async load phase, so we fire and auto-remove via microtask.
-    if (event === 'resolved') {
-      Promise.resolve().then(() => {
-        this._handlers.get(event)?.delete(cb)
-        try { cb() } catch {}
-      })
-    }
     return { unsubscribe: () => this._handlers.get(event)?.delete(cb) }
   }
 
   off(event: string, cb: (...args: any[]) => any): void {
     this._handlers.get(event)?.delete(cb)
+    this._resolvedCallbacks = this._resolvedCallbacks.filter(f => f !== cb)
   }
 
   trigger(event: string, ...args: any[]): void {
     this._handlers.get(event)?.forEach(cb => { try { cb(...args) } catch {} })
+  }
+
+  _fireResolved(): void {
+    if (this._resolvedFired) return
+    this._resolvedFired = true
+    this._resolvedCallbacks.forEach(cb => { try { cb() } catch {} })
+    this._resolvedCallbacks = []
+  }
+
+  async populate(files: any[], read: (path: string) => Promise<string>): Promise<void> {
+    const BATCH = 20
+    for (let i = 0; i < files.length; i += BATCH) {
+      const batch = files.slice(i, i + BATCH)
+      await Promise.all(batch.map(async (file: any) => {
+        try {
+          const content = await read(file.path)
+          const data = parseFileCache(content, file.path)
+          this._cache.set(file.path, data)
+          this.trigger('changed', file, data)
+        } catch {
+          // skip unreadable files silently
+        }
+      }))
+    }
+    this._fireResolved()
+  }
+
+  updateFile(file: { path: string }, content: string): void {
+    const data = parseFileCache(content, file.path)
+    this._cache.set(file.path, data)
+    this.trigger('changed', file, data)
+  }
+
+  deleteFile(file: { path: string }): void {
+    this._cache.delete(file.path)
+    this.trigger('delete', file)
+  }
+
+  reset(): void {
+    this._cache.clear()
+    this._resolvedFired = false
   }
 }
 
