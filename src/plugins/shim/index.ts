@@ -316,10 +316,11 @@ export class MetadataCache {
   on(event: string, cb: (...args: any[]) => any): { unsubscribe: () => void } {
     if (event === 'resolved') {
       if (this._resolvedFired) {
-        Promise.resolve().then(() => { try { cb() } catch {} })
-      } else {
-        this._resolvedCallbacks.push(cb)
+        let cancelled = false
+        Promise.resolve().then(() => { if (!cancelled) { try { cb() } catch {} } })
+        return { unsubscribe: () => { cancelled = true } }
       }
+      this._resolvedCallbacks.push(cb)
       return { unsubscribe: () => {
         this._resolvedCallbacks = this._resolvedCallbacks.filter(f => f !== cb)
       }}
@@ -331,7 +332,9 @@ export class MetadataCache {
 
   off(event: string, cb: (...args: any[]) => any): void {
     this._handlers.get(event)?.delete(cb)
-    this._resolvedCallbacks = this._resolvedCallbacks.filter(f => f !== cb)
+    if (event === 'resolved') {
+      this._resolvedCallbacks = this._resolvedCallbacks.filter(f => f !== cb)
+    }
   }
 
   trigger(event: string, ...args: any[]): void {
