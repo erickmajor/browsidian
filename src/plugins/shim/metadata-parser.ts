@@ -11,7 +11,7 @@ function parseScalar(v: string): any {
   if (v === 'false') return false
   if (v === 'null' || v === '~') return null
   const n = Number(v)
-  if (!isNaN(n) && v !== '') return n
+  if (!isNaN(n) && v.trim() !== '') return n
   if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
     return v.slice(1, -1)
   return v
@@ -57,7 +57,7 @@ export function parseFileCache(content: string, _path: string): CachedMetadata {
 
   // Step 1: extract frontmatter
   let body = content
-  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)(?:\r?\n)?---/)
   if (fmMatch) {
     try {
       result.frontmatter = parseFrontmatterYaml(fmMatch[1])
