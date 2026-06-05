@@ -160,6 +160,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const adapter = new ServerAdapter(cfg.vault)
     set({ adapter, vaultPath: cfg.vault, isLoading: false })
     await get().refreshTree()
+    void import('@/plugins/loader').then(m => m.populateMetadataCache())
   },
 
   async initBrowserMode() {
@@ -192,6 +193,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
     set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath, mode: 'browser' })
     await get().refreshTree()
+    void import('@/plugins/loader').then(m => m.populateMetadataCache())
   },
 
   async restoreBrowserMode(): Promise<boolean> {
@@ -217,6 +219,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
     set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath: handle.name, mode: 'browser' })
     await get().refreshTree()
+    void import('@/plugins/loader').then(m => m.populateMetadataCache())
     return true
   },
 
@@ -225,6 +228,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const vaultPath = DemoAdapter.VAULT_NAME
     set({ adapter, vaultPath, mode: 'demo' })
     await get().refreshTree()
+    void import('@/plugins/loader').then(m => m.populateMetadataCache())
     const welcomeFile: VaultFile = { name: 'Welcome.md', path: 'Welcome.md', isDir: false }
     await get().openFile(welcomeFile).catch(() => {})
   },
@@ -234,6 +238,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const vaultPath = adapter.vaultLabel
     set({ adapter, vaultPath, mode: 'dropbox' })
     await get().refreshTree()
+    void import('@/plugins/loader').then(m => m.populateMetadataCache())
   },
 
   async initElectronMode() {
@@ -245,6 +250,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     setElectronVaultRoot(vaultPath)
     set({ adapter, vaultPath, mode: 'electron' })
     await get().refreshTree()
+    void import('@/plugins/loader').then(m => m.populateMetadataCache())
   },
 
   async restoreElectronMode(): Promise<boolean> {
@@ -256,6 +262,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       setElectronVaultRoot(saved)
       set({ adapter, vaultPath: saved, mode: 'electron' })
       await get().refreshTree()
+      void import('@/plugins/loader').then(m => m.populateMetadataCache())
       return true
     } catch {
       localStorage.removeItem('electronVaultV1')
