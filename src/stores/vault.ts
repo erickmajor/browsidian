@@ -373,7 +373,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     if (!adapter || fromPath === toPath) return
     await adapter.renameFile(fromPath, toPath)
     void import('@/plugins/loader').then(async m => {
-      m.metadataCache.deleteFile({ path: fromPath })
+      if (fromPath.toLowerCase().endsWith('.md')) {
+        m.metadataCache.deleteFile({ path: fromPath })
+      }
       if (toPath.toLowerCase().endsWith('.md')) {
         const content = await adapter.readFile(toPath).catch(() => '')
         m.metadataCache.updateFile({ path: toPath }, content)
