@@ -358,6 +358,7 @@ export class MetadataCache {
       await Promise.all(batch.map(async (file: any) => {
         try {
           const content = await read(file.path)
+          if (this._populateGen !== gen) return
           const data = parseFileCache(content, file.path)
           this._cache.set(file.path, data)
           this.trigger('changed', file, data)
