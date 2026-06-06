@@ -22,6 +22,7 @@ interface UIStore {
   draggingPath: string | null
   contextMenuPath: string | null
   contextMenuPos: { x: number; y: number } | null
+  graphOpen: boolean
 
   setStatus(msg: string): void
   setTheme(theme: Theme): void
@@ -29,6 +30,7 @@ interface UIStore {
   setDragging(path: string | null): void
   showContextMenu(path: string, x: number, y: number): void
   hideContextMenu(): void
+  setGraphOpen(v: boolean): void
 }
 
 export const useUIStore = create<UIStore>((set, get) => {
@@ -41,6 +43,7 @@ export const useUIStore = create<UIStore>((set, get) => {
     draggingPath: null,
     contextMenuPath: null,
     contextMenuPos: null,
+    graphOpen: false,
 
     setStatus(msg) { set({ status: msg }) },
 
@@ -62,5 +65,7 @@ export const useUIStore = create<UIStore>((set, get) => {
     hideContextMenu() {
       set({ contextMenuPath: null, contextMenuPos: null })
     },
+
+    setGraphOpen(v) { set({ graphOpen: v }) },
   }
 })
