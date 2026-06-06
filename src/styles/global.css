@@ -1082,3 +1082,48 @@ html, body, #root {
   pointer-events: none;
   user-select: none;
 }
+
+/* ─── Graph view overlay ─────────────────────────────────────────────────── */
+.graph-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex; align-items: center; justify-content: center;
+}
+.graph-container {
+  width: 95vw; height: 95vh;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-dialog);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.graph-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.graph-search {
+  flex: 1;
+  background: var(--control-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 4px 10px;
+  color: var(--text);
+  font-size: 13px;
+}
+.graph-search:focus { border-color: var(--focus-border); outline: none; }
+.graph-svg-wrap { position: relative; flex: 1; }
+.graph-svg { display: block; width: 100%; height: 100%; }
+.graph-loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px; pointer-events: none;
+}
+.graph-tooltip {
+  position: fixed; z-index: 210;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 4px 8px; font-size: 11px; color: var(--text);
+  pointer-events: none; white-space: nowrap;
+}
