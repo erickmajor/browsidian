@@ -29,8 +29,19 @@ const PluginIcon = () => (
   </svg>
 )
 
+const GraphIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="5" r="2" />
+    <circle cx="5" cy="19" r="2" />
+    <circle cx="19" cy="19" r="2" />
+    <line x1="12" y1="7" x2="5" y2="17" />
+    <line x1="12" y1="7" x2="19" y2="17" />
+    <line x1="5" y1="19" x2="19" y2="19" />
+  </svg>
+)
+
 export function StatusBar() {
-  const { status, theme, toggleTheme } = useUIStore()
+  const { status, theme, toggleTheme, setGraphOpen } = useUIStore()
   const { setManagerOpen } = usePluginStore()
   const [version, setVersion] = useState('')
 
@@ -70,6 +81,13 @@ export function StatusBar() {
             {'</>'}
           </button>
         )}
+        <button
+          className="btn btn-ghost"
+          title="Graph view"
+          onClick={() => setGraphOpen(true)}
+        >
+          <GraphIcon />
+        </button>
         <button
           className="btn btn-ghost plugin-manager-btn"
           title="Plugins"
