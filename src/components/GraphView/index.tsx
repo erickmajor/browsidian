@@ -14,7 +14,7 @@ function renderGraph(
   tooltip: HTMLDivElement,
   data: { nodes: GraphNode[]; edges: GraphEdge[] },
   onNodeClick: (node: GraphNode) => void,
-): void {
+): () => void {
   const { width, height } = svg.getBoundingClientRect()
 
   // Glow filter for file nodes
@@ -99,6 +99,11 @@ function renderGraph(
       .attr('x', (d: any) => d.x)
       .attr('y', (d: any) => d.y - 14)
   })
+
+  return () => {
+    sim.stop()
+    d3.select(svg).selectAll('*').remove()
+  }
 }
 
 export function GraphView({ onClose }: GraphViewProps) {
@@ -108,6 +113,7 @@ export function GraphView({ onClose }: GraphViewProps) {
   const svgRef     = useRef<SVGSVGElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const d3Ref      = useRef<any>(null)
+  const cleanupRef = useRef<(() => void) | null>(null)
 
   const [loading,     setLoading]     = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -132,9 +138,10 @@ export function GraphView({ onClose }: GraphViewProps) {
       d3Ref.current = d3
       setLoading(false)
       if (svgRef.current && tooltipRef.current) {
-        renderGraph(d3, svgRef.current, tooltipRef.current, graphData, handleNodeClick)
+        cleanupRef.current = renderGraph(d3, svgRef.current, tooltipRef.current, graphData, handleNodeClick)
       }
     })
+    return () => { cleanupRef.current?.(); cleanupRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Search: fade non-matching nodes
