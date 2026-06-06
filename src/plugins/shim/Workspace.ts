@@ -83,7 +83,7 @@ export class Workspace {
   iterateAllLeaves(_cb: (leaf: WorkspaceLeaf) => void): void {}
   revealLeaf(_leaf: WorkspaceLeaf): void {}
   requestSaveActiveFile(): void {}
-  trigger(_event: string, ..._args: any[]): void {}
+  trigger(event: string, ...args: any[]): void { this._emit(event, ...args) }
   updateOptions(): void {}
   registerHoverLinkSource(_id: string, _info: any): void {}
   unregisterHoverLinkSource(_id: string): void {}
