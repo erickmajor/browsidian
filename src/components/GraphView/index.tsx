@@ -133,15 +133,17 @@ export function GraphView({ onClose }: GraphViewProps) {
 
   // Build graph + load D3 on mount
   useEffect(() => {
+    let cancelled = false
     const graphData = buildGraph(tree, metadataCache)
     import('d3').then(d3 => {
+      if (cancelled) return
       d3Ref.current = d3
       setLoading(false)
       if (svgRef.current && tooltipRef.current) {
         cleanupRef.current = renderGraph(d3, svgRef.current, tooltipRef.current, graphData, handleNodeClick)
       }
     })
-    return () => { cleanupRef.current?.(); cleanupRef.current = null }
+    return () => { cancelled = true; cleanupRef.current?.(); cleanupRef.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Search: fade non-matching nodes
