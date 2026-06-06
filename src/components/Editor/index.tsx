@@ -101,6 +101,13 @@ export function EditorArea() {
 
   useEffect(() => { setShowSource(false) }, [activeFile?.path])
 
+  useEffect(() => {
+    if (showSource && viewRef.current) {
+      viewRef.current.requestMeasure()
+      viewRef.current.focus()
+    }
+  }, [showSource])
+
   const handleBlur = () => {
     if (isDirty) void saveFile()
   }
