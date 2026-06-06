@@ -320,6 +320,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     if (!adapter || !activeFile) return
     await adapter.writeFile(activeFile.path, content)
     set({ isDirty: false, showPreview: true })
+    if (activeFile.name.toLowerCase().endsWith('.md')) {
+      void import('@/plugins/loader').then(m => m.metadataCache.updateFile(activeFile, content)).catch(() => {})
+    }
   },
 
   setContent(content) {
@@ -336,6 +339,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       : `${name.trim()}.md`
     const filePath = base ? `${base}/${filename}` : filename
     await adapter.writeFile(filePath, '')
+    void import('@/plugins/loader').then(m => m.metadataCache.updateFile({ path: filePath }, '')).catch(() => {})
     get().invalidateIndex()
     await get().refreshTree()
     const file: VaultFile = { name: filename, path: filePath, isDir: false }
@@ -356,6 +360,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const { adapter, activeFile } = get()
     if (!adapter) return
     await adapter.deleteFile(file.path)
+    void import('@/plugins/loader').then(m => m.metadataCache.deleteFile(file)).catch(() => {})
     get().invalidateIndex()
     if (activeFile?.path === file.path) {
       set({ activeFile: null, content: '', isDirty: false, showPreview: true })
@@ -367,6 +372,13 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const { adapter, activeFile } = get()
     if (!adapter || fromPath === toPath) return
     await adapter.renameFile(fromPath, toPath)
+    void import('@/plugins/loader').then(async m => {
+      m.metadataCache.deleteFile({ path: fromPath })
+      if (toPath.toLowerCase().endsWith('.md')) {
+        const content = await adapter.readFile(toPath).catch(() => '')
+        m.metadataCache.updateFile({ path: toPath }, content)
+      }
+    }).catch(() => {})
     get().invalidateIndex()
     if (activeFile?.path === fromPath) {
       const filename = toPath.split('/').pop() ?? toPath
