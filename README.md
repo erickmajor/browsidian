@@ -40,6 +40,7 @@ It supports four working modes:
 - `.excalidraw` and `.excalidraw.md` files — Full interactive Excalidraw whiteboard editor (lazy-loaded) with auto-save. Compatible with both raw Excalidraw JSON and the Obsidian Excalidraw plugin wrapper format. Grid is enabled by default (20px); toggle it with the **⊞ Grid** button in the canvas toolbar or `Ctrl+'`. `.excalidraw.md` files show **Excalidraw** / **Código** tabs — switch to Código to view and edit the raw markdown source.
 - **Electron layout fix:** The Electron titlebar is now correctly positioned via an explicit CSS grid row (`auto 1fr`), so the editor and sidebar fill the full remaining height without a gap or collapsed content area.
 - **Dataview fix:** `app.workspace.trigger()` now correctly fires registered workspace event listeners, enabling Dataview's `dataview:refresh-views` mechanism to notify views after the index finishes building.
+- **Plugin CSS:** Each plugin's `styles.css` is now injected into the document on load and removed on unload, fixing missing plugin styles (e.g., Dataview's `(count)` formatting in table headers).
 
 ## Requirements
 

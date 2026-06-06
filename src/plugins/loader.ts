@@ -389,6 +389,19 @@ export async function loadPlugin(
     throw new Error(`[plugin:${id}] No valid plugin class exported`)
   }
 
+  // Inject plugin stylesheet if present
+  try {
+    const css = await adapter.readFile(`${pluginDir}/styles.css`)
+    const styleId = `plugin-style-${id}`
+    let el = document.getElementById(styleId) as HTMLStyleElement | null
+    if (!el) {
+      el = document.createElement('style')
+      el.id = styleId
+      document.head.appendChild(el)
+    }
+    el.textContent = css
+  } catch {}
+
   const instance = new PluginClass(obsidianApp, manifest)
   await instance.load()
 
@@ -460,6 +473,7 @@ export async function unloadPlugin(id: string): Promise<void> {
   if (plugin?.instance) {
     try { plugin.instance.unload() } catch {}
   }
+  document.getElementById(`plugin-style-${id}`)?.remove()
   // Unregister all commands from this plugin (collect first to avoid mutating Map during iteration)
   const toRemove = Array.from(commandRegistry._cmds.keys()).filter(k => k.startsWith(`${id}:`))
   for (const k of toRemove) commandRegistry.unregister(k)
