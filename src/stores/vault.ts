@@ -273,7 +273,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   async restoreLastFile() {
     const savedPath = localStorage.getItem('lastActiveFileV1')
     if (!savedPath || !get().vaultPath) return
-    const name = savedPath.split('/').pop() ?? savedPath
+    const name = savedPath.split(/[\\/]/).pop() ?? savedPath
     await get().openFile({ name, path: savedPath, isDir: false })
   },
 

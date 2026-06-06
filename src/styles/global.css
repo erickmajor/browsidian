@@ -90,6 +90,14 @@ html, body, #root {
   grid-template-columns: var(--sidebar-width) 1fr;
 }
 
+/* When the Electron titlebar is present the grid has two implicit rows and
+   align-content:stretch distributes free space proportionally, leaving the
+   content row with insufficient height for the flex→100% chain inside .main.
+   Explicit rows fix this: titlebar gets its natural height, content fills the rest. */
+.app:has(.titlebar) {
+  grid-template-rows: auto 1fr;
+}
+
 /* ─── Titlebar (Electron) ────────────────────────────────────────────────── */
 .titlebar {
   grid-column: 1 / -1;

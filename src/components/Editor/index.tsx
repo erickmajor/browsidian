@@ -94,6 +94,7 @@ export function EditorArea() {
 
   useEffect(() => {
     if (!showPreview && viewRef.current) {
+      viewRef.current.requestMeasure()
       viewRef.current.focus()
     }
   }, [showPreview])

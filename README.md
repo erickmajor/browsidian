@@ -38,6 +38,7 @@ It supports four working modes:
 - **Dataview support:** The app builds an internal metadata cache on vault load (frontmatter + inline tags) so `TABLE`, `LIST`, and `TASK` queries with `FROM #tag` clauses return real results.
 - `.canvas` files — Interactive canvas editor with pan, zoom, drag, node creation (text, file, group), edge drawing, and auto-save. Compatible with Obsidian's JSON Canvas format.
 - `.excalidraw` and `.excalidraw.md` files — Full interactive Excalidraw whiteboard editor (lazy-loaded) with auto-save. Compatible with both raw Excalidraw JSON and the Obsidian Excalidraw plugin wrapper format. Grid is enabled by default (20px); toggle it with the **⊞ Grid** button in the canvas toolbar or `Ctrl+'`. `.excalidraw.md` files show **Excalidraw** / **Código** tabs — switch to Código to view and edit the raw markdown source.
+- **Electron layout fix:** The Electron titlebar is now correctly positioned via an explicit CSS grid row (`auto 1fr`), so the editor and sidebar fill the full remaining height without a gap or collapsed content area.
 
 ## Requirements
 
