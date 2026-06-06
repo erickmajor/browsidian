@@ -41,6 +41,7 @@ It supports four working modes:
 - **Electron layout fix:** The Electron titlebar is now correctly positioned via an explicit CSS grid row (`auto 1fr`), so the editor and sidebar fill the full remaining height without a gap or collapsed content area.
 - **Dataview fix:** `app.workspace.trigger()` now correctly fires registered workspace event listeners, enabling Dataview's `dataview:refresh-views` mechanism to notify views after the index finishes building.
 - **Plugin CSS:** Each plugin's `styles.css` is now injected into the document on load and removed on unload, fixing missing plugin styles (e.g., Dataview's `(count)` formatting in table headers).
+- **Graph view:** Click the graph icon in the status bar to open a full-screen force-directed graph showing wikilink connections and shared tags between markdown files. Supports zoom, pan, drag, node click to open file, and search/filter.
 
 ## Requirements
 

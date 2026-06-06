@@ -10,6 +10,7 @@ import { Toasts } from '@/components/Toasts'
 import { PromptDialog } from '@/components/Dialogs/PromptDialog'
 import { DropboxPathPicker } from '@/components/Dialogs/DropboxPathPicker'
 import { PluginManager } from '@/components/PluginManager'
+import { GraphView } from '@/components/GraphView'
 import { loadEnabledPlugins, unloadPlugin } from '@/plugins/loader'
 import { usePluginStore } from '@/plugins/store'
 
@@ -28,7 +29,7 @@ export default function App() {
     initElectronMode, restoreElectronMode, restoreBrowserMode, restoreLastFile,
     newFile, newFolder, disconnect,
   } = useVaultStore()
-  const { setStatus } = useUIStore()
+  const { setStatus, graphOpen, setGraphOpen } = useUIStore()
   const { startOAuth, finishOAuth, setRootPath, clear: clearDropbox } = useDropboxStore()
 
   const [ready, setReady] = useState(false)
@@ -233,6 +234,7 @@ export default function App() {
 
       <ContextMenu />
       <PluginManager />
+      {graphOpen && <GraphView onClose={() => setGraphOpen(false)} />}
 
       <PromptDialog
         open={prompt.open}
