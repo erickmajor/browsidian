@@ -1,7 +1,7 @@
 {
   "name": "browsidian",
   "private": true,
-  "version": "1.2.71",
+  "version": "1.2.72",
   "description": "Obsidian vault editor — Web, Electron and CLI",
   "main": "dist/electron/main.js",
   "bin": {
