@@ -135,16 +135,16 @@ export function EditorArea() {
       <div className="editor-wrap">
         <div className="editor-mode-tabs">
           <button
-            className={`editor-mode-tab${!showSource ? ' active' : ''}`}
-            onClick={switchToExcalidrawTab}
-          >
-            Excalidraw
-          </button>
-          <button
             className={`editor-mode-tab${showSource ? ' active' : ''}`}
             onClick={switchToSourceTab}
           >
             Código
+          </button>
+          <button
+            className={`editor-mode-tab${!showSource ? ' active' : ''}`}
+            onClick={switchToExcalidrawTab}
+          >
+            Excalidraw
           </button>
         </div>
         <div className="editor-content">
