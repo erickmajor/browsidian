@@ -1,8 +1,11 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import * as fs from 'fs/promises'
+import * as fsSync from 'fs'
 import * as path from 'path'
 
 const DEV = process.env.NODE_ENV === 'development'
+
+let _vaultFsWatcher: fsSync.FSWatcher | null = null
 
 // ─── Janela ───────────────────────────────────────────────────────────────────
 
@@ -108,4 +111,30 @@ ipcMain.handle('plugin:load', async (_e, pluginDir: string) => {
   const mainFile = path.join(pluginDir, manifest.main ?? 'main.js')
   const code = await fs.readFile(mainFile, 'utf-8')
   return { manifest, code }
+})
+
+// ─── IPC: File watching ───────────────────────────────────────────────────────
+
+ipcMain.on('vault:watch:start', (e, vaultPath: string) => {
+  _vaultFsWatcher?.close()
+  _vaultFsWatcher = null
+  const win = BrowserWindow.fromWebContents(e.sender)
+  if (!win) return
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+  try {
+    _vaultFsWatcher = fsSync.watch(vaultPath, { recursive: true }, (eventType, filename) => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        win.webContents.send('vault:changed', { eventType, filename })
+      }, 500)
+    })
+    _vaultFsWatcher.on('error', (err) => console.error('[watcher]', err))
+  } catch (err) {
+    console.error('[watcher] failed to start', err)
+  }
+})
+
+ipcMain.on('vault:watch:stop', () => {
+  _vaultFsWatcher?.close()
+  _vaultFsWatcher = null
 })

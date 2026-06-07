@@ -26,6 +26,10 @@ interface ElectronAPI {
   getVersion(): Promise<string>
   loadPlugin(pluginDir: string): Promise<{ manifest: Record<string, string>; code: string }>
   toggleDevTools(): Promise<void>
+  watchVault(vaultPath: string): void
+  stopWatchVault(): void
+  onVaultChanged(cb: (event: unknown, data: { eventType: string; filename: string | null }) => void): void
+  offVaultChanged(): void
 }
 
 declare interface Window {

@@ -14,4 +14,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleDevTools: ()                             => ipcRenderer.invoke('devtools:toggle'),
   // Plugins
   loadPlugin:  (pluginDir: string)             => ipcRenderer.invoke('plugin:load',  pluginDir),
+  // File watching
+  watchVault:      (vaultPath: string)         => ipcRenderer.send('vault:watch:start', vaultPath),
+  stopWatchVault:  ()                          => ipcRenderer.send('vault:watch:stop'),
+  onVaultChanged:  (cb: (event: unknown, data: { eventType: string; filename: string | null }) => void) =>
+    ipcRenderer.on('vault:changed', cb),
+  offVaultChanged: ()                          => ipcRenderer.removeAllListeners('vault:changed'),
 })
