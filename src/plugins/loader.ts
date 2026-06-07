@@ -10,6 +10,7 @@ import { MetadataCache } from './shim/index'
 import { usePluginStore, type LoadedPlugin } from './store'
 import { useVaultStore } from '@/stores/vault'
 import type { PluginManifest } from './shim/types'
+import { isIgnoredByUser } from '@/lib/obsidianConfig'
 
 // Install DOM augmentations once when this module loads
 installDomAugmentations()
@@ -152,12 +153,15 @@ export const obsidianApp = {
 
 export async function populateMetadataCache(): Promise<void> {
   metadataCache.reset()
-  const { adapter } = useVaultStore.getState()
+  const { adapter, ignoredPatterns } = useVaultStore.getState()
   if (!adapter) {
     metadataCache._fireResolved()
     return
   }
-  const files = vault.getMarkdownFiles()
+  const allFiles = vault.getMarkdownFiles()
+  const files = ignoredPatterns.length > 0
+    ? allFiles.filter(f => !isIgnoredByUser(f.path, ignoredPatterns))
+    : allFiles
   if (files.length === 0) {
     console.warn('[MetadataCache] no markdown files found — vault tree may not be ready')
     metadataCache._fireResolved()

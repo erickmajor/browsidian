@@ -359,7 +359,14 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     useUIStore.getState().setExternalChangeFile(null)
     useUIStore.getState().setExternalChangeDeleted(false)
     if (activeFile.name.toLowerCase().endsWith('.md')) {
-      void import('@/plugins/loader').then(m => m.metadataCache.updateFile(activeFile, content)).catch(() => {})
+      const { vaultPath, ignoredPatterns } = get()
+      const normRoot = vaultPath ? vaultPath.replace(/[/\\]+$/, '') : ''
+      const rel = normRoot
+        ? activeFile.path.replace(normRoot, '').replace(/^[/\\]+/, '').replace(/\\/g, '/')
+        : activeFile.path
+      if (!isIgnoredByUser(rel, ignoredPatterns)) {
+        void import('@/plugins/loader').then(m => m.metadataCache.updateFile(activeFile, content)).catch(() => {})
+      }
     }
   },
 
@@ -377,7 +384,14 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       : `${name.trim()}.md`
     const filePath = base ? `${base}/${filename}` : filename
     await adapter.writeFile(filePath, '')
-    void import('@/plugins/loader').then(m => m.metadataCache.updateFile({ path: filePath }, '')).catch(() => {})
+    const { vaultPath: vp, ignoredPatterns: ip } = get()
+    const normRoot2 = vp ? vp.replace(/[/\\]+$/, '') : ''
+    const relPath = normRoot2
+      ? filePath.replace(normRoot2, '').replace(/^[/\\]+/, '').replace(/\\/g, '/')
+      : filePath
+    if (!isIgnoredByUser(relPath, ip)) {
+      void import('@/plugins/loader').then(m => m.metadataCache.updateFile({ path: filePath }, '')).catch(() => {})
+    }
     get().invalidateIndex()
     await get().refreshTree()
     const file: VaultFile = { name: filename, path: filePath, isDir: false }
