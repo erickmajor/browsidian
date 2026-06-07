@@ -103,7 +103,8 @@ interface VaultStore {
   isLoading:  boolean
   showPreview: boolean
   selectedDir: string | null
-  fileIndex:  Map<string, string[]> | null
+  fileIndex:        Map<string, string[]> | null
+  ignoredPatterns:  string[]
   _autosaveTimer: ReturnType<typeof setTimeout> | null
   _watcher: VaultWatcher | null
 
@@ -148,7 +149,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   isLoading:   false,
   showPreview: true,
   selectedDir: null,
-  fileIndex:   null,
+  fileIndex:        null,
+  ignoredPatterns:  [],
   _autosaveTimer: null,
   _watcher: null,
 
@@ -302,6 +304,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       tree: [], activeFile: null, content: '',
       isDirty: false, showPreview: true, selectedDir: null, fileIndex: null,
       _watcher: null,
+      ignoredPatterns: [],
     })
     await get().initServerMode()
   },
