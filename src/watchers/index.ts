@@ -1,5 +1,6 @@
 import type { VaultMode } from '@/stores/vault'
 import type { VaultAdapter } from '@/adapters'
+import { ElectronWatcher } from './electron'
 
 export interface VaultWatcher {
   start(): void
@@ -9,9 +10,10 @@ export interface VaultWatcher {
 }
 
 export function createWatcher(
-  _mode: VaultMode,
-  _adapter: VaultAdapter,
-  _vaultPath: string,
+  mode: VaultMode,
+  adapter: VaultAdapter,
+  vaultPath: string,
 ): VaultWatcher | null {
-  return null  // implementations added per task
+  if (mode === 'electron') return new ElectronWatcher(vaultPath)
+  return null
 }
