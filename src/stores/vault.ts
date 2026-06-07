@@ -7,6 +7,7 @@ import type { DropboxAuth } from '@/adapters/dropbox'
 import { createWatcher } from '@/watchers'
 import type { VaultWatcher } from '@/watchers'
 import { useUIStore } from '@/stores/ui'
+import { loadUserIgnorePatterns } from '@/lib/obsidianConfig'
 
 export type VaultMode = 'server' | 'browser' | 'demo' | 'dropbox' | 'electron'
 
@@ -167,6 +168,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const adapter = new ServerAdapter(cfg.vault)
     set({ adapter, vaultPath: cfg.vault, isLoading: false })
     await get().refreshTree()
+    const ignoredPatterns = await loadUserIgnorePatterns(adapter, cfg.vault)
+    set({ ignoredPatterns })
     _attachWatcher('server', adapter, cfg.vault, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -201,6 +204,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
     set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath, mode: 'browser' })
     await get().refreshTree()
+    const ignoredPatterns = await loadUserIgnorePatterns(browserAdapter as unknown as VaultAdapter, vaultPath)
+    set({ ignoredPatterns })
     _attachWatcher('browser', browserAdapter as unknown as VaultAdapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -228,6 +233,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
     set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath: handle.name, mode: 'browser' })
     await get().refreshTree()
+    const ignoredPatterns = await loadUserIgnorePatterns(browserAdapter as unknown as VaultAdapter, handle.name)
+    set({ ignoredPatterns })
     _attachWatcher('browser', browserAdapter as unknown as VaultAdapter, handle.name, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
     return true
@@ -236,7 +243,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   async initDemoMode() {
     const adapter = new DemoAdapter()
     const vaultPath = DemoAdapter.VAULT_NAME
-    set({ adapter, vaultPath, mode: 'demo' })
+    set({ adapter, vaultPath, mode: 'demo', ignoredPatterns: [] })
     await get().refreshTree()
     _attachWatcher('demo', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
@@ -249,6 +256,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const vaultPath = adapter.vaultLabel
     set({ adapter, vaultPath, mode: 'dropbox' })
     await get().refreshTree()
+    const ignoredPatterns = await loadUserIgnorePatterns(adapter, vaultPath)
+    set({ ignoredPatterns })
     _attachWatcher('dropbox', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -262,6 +271,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     setElectronVaultRoot(vaultPath)
     set({ adapter, vaultPath, mode: 'electron' })
     await get().refreshTree()
+    const ignoredPatterns = await loadUserIgnorePatterns(adapter, vaultPath)
+    set({ ignoredPatterns })
     _attachWatcher('electron', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -275,6 +286,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       setElectronVaultRoot(saved)
       set({ adapter, vaultPath: saved, mode: 'electron' })
       await get().refreshTree()
+      const ignoredPatterns = await loadUserIgnorePatterns(adapter, saved)
+      set({ ignoredPatterns })
       _attachWatcher('electron', adapter, saved, get, set)
       void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
       return true
