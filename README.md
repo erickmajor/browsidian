@@ -42,6 +42,7 @@ It supports four working modes:
 - **Dataview fix:** `app.workspace.trigger()` now correctly fires registered workspace event listeners, enabling Dataview's `dataview:refresh-views` mechanism to notify views after the index finishes building.
 - **Plugin CSS:** Each plugin's `styles.css` is now injected into the document on load and removed on unload, fixing missing plugin styles (e.g., Dataview's `(count)` formatting in table headers).
 - **Graph view:** Click the graph icon in the status bar to open a full-screen force-directed graph showing wikilink connections and shared tags between markdown files. Supports zoom, pan, drag, node click to open file, and search/filter.
+- **File watching:** The app detects external changes to vault files without requiring a restart. In Electron mode, native `fs.watch` pushes events instantly. In Server mode, the server pushes changes via SSE. In Browser mode, the app polls every 15 s using the File System Access API. The file tree refreshes automatically. If the active file is modified externally while you have unsaved edits, a toast prompts you to reload or keep your version.
 
 ## Requirements
 
