@@ -107,8 +107,9 @@ function renderGraph(
 }
 
 export function GraphView({ onClose }: GraphViewProps) {
-  const tree     = useVaultStore(s => s.tree)
-  const openFile = useVaultStore(s => s.openFile)
+  const tree            = useVaultStore(s => s.tree)
+  const openFile        = useVaultStore(s => s.openFile)
+  const ignoredPatterns = useVaultStore(s => s.ignoredPatterns)
 
   const svgRef     = useRef<SVGSVGElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -134,7 +135,7 @@ export function GraphView({ onClose }: GraphViewProps) {
   // Build graph + load D3 on mount
   useEffect(() => {
     let cancelled = false
-    const graphData = buildGraph(tree, metadataCache)
+    const graphData = buildGraph(tree, metadataCache, ignoredPatterns)
     import('d3').then(d3 => {
       if (cancelled) return
       d3Ref.current = d3

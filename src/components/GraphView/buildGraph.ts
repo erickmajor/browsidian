@@ -1,5 +1,6 @@
 import type { VaultFile } from '@/stores/vault'
 import type { MetadataCache } from '@/plugins/shim/index'
+import { isIgnoredByUser } from '@/lib/obsidianConfig'
 
 export interface GraphNode {
   id: string       // file path or tag string (e.g. '#ideas')
@@ -17,13 +18,16 @@ export interface GraphEdge {
 // from MetadataCache keys which always use relative forward-slash paths.
 function flattenMdFiles(
   tree: VaultFile[],
+  ignoredPatterns: string[],
   prefix = '',
 ): Array<{ file: VaultFile; cachePath: string }> {
   const out: Array<{ file: VaultFile; cachePath: string }> = []
   for (const f of tree) {
     const rel = prefix ? `${prefix}/${f.name}` : f.name
-    if (f.isDir) out.push(...flattenMdFiles(f.children ?? [], rel))
-    else if (f.name.toLowerCase().endsWith('.md')) out.push({ file: f, cachePath: rel })
+    if (f.isDir) out.push(...flattenMdFiles(f.children ?? [], ignoredPatterns, rel))
+    else if (f.name.toLowerCase().endsWith('.md')) {
+      if (!isIgnoredByUser(rel, ignoredPatterns)) out.push({ file: f, cachePath: rel })
+    }
   }
   return out
 }
@@ -31,8 +35,9 @@ function flattenMdFiles(
 export function buildGraph(
   tree: VaultFile[],
   metadataCache: MetadataCache,
+  ignoredPatterns: string[],
 ): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const fileEntries = flattenMdFiles(tree)
+  const fileEntries = flattenMdFiles(tree, ignoredPatterns)
 
   // Build name→path lookup for wikilink resolution (case-insensitive basename without .md)
   // Node IDs use f.path (adapter path) so openFile works; cache lookups use cachePath.
