@@ -456,6 +456,44 @@ async function main() {
           });
         }
 
+        if (req.method === 'GET' && reqUrl.pathname === '/api/watch') {
+          const WATCH_IGNORED = new Set(['.obsidian', '.git', 'node_modules', '.trash', '.DS_Store'])
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream; charset=utf-8',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+          })
+          res.write('\n')
+
+          let debounceTimer = null
+          let fsWatcher
+          try {
+            fsWatcher = fs.watch(vaultReal, { recursive: true }, (eventType, filename) => {
+              if (!filename) return
+              const parts = filename.replace(/\\/g, '/').split('/')
+              if (parts.some((p) => WATCH_IGNORED.has(p))) return
+              if (debounceTimer) clearTimeout(debounceTimer)
+              debounceTimer = setTimeout(() => {
+                const relPath = filename.replace(/\\/g, '/')
+                res.write(`data: ${JSON.stringify({ type: eventType, path: relPath })}\n\n`)
+              }, 500)
+            })
+            fsWatcher.on('error', (err) => console.error('[SSE watcher]', err))
+          } catch (err) {
+            console.error('[SSE watcher] failed to start', err)
+          }
+
+          const heartbeat = setInterval(() => res.write('data: {"type":"ping"}\n\n'), 30000)
+
+          res.on('close', () => {
+            fsWatcher?.close()
+            clearInterval(heartbeat)
+            if (debounceTimer) clearTimeout(debounceTimer)
+          })
+          return
+        }
+
         if (req.method === "GET" && reqUrl.pathname === "/api/list") {
           const dir = reqUrl.searchParams.get("dir") || "";
           const entries = await listDir(vaultReal, dir);

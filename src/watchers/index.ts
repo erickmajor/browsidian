@@ -1,6 +1,7 @@
 import type { VaultMode } from '@/stores/vault'
 import type { VaultAdapter } from '@/adapters'
 import { ElectronWatcher } from './electron'
+import { ServerWatcher } from './server'
 
 export interface VaultWatcher {
   start(): void
@@ -15,5 +16,6 @@ export function createWatcher(
   vaultPath: string,
 ): VaultWatcher | null {
   if (mode === 'electron') return new ElectronWatcher(vaultPath)
+  if (mode === 'server') return new ServerWatcher()
   return null
 }
