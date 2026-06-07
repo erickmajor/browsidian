@@ -429,8 +429,15 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
         m.metadataCache.deleteFile({ path: fromPath })
       }
       if (toPath.toLowerCase().endsWith('.md')) {
-        const content = await adapter.readFile(toPath).catch(() => '')
-        m.metadataCache.updateFile({ path: toPath }, content)
+        const { vaultPath, ignoredPatterns } = get()
+        const normRoot = vaultPath ? vaultPath.replace(/[/\\]+$/, '') : ''
+        const rel = normRoot
+          ? toPath.replace(normRoot, '').replace(/^[/\\]+/, '').replace(/\\/g, '/')
+          : toPath
+        if (!isIgnoredByUser(rel, ignoredPatterns)) {
+          const content = await adapter.readFile(toPath).catch(() => '')
+          m.metadataCache.updateFile({ path: toPath }, content)
+        }
       }
     }).catch(() => {})
     get().invalidateIndex()
