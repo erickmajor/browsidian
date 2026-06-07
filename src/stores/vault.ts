@@ -170,10 +170,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       return
     }
     const adapter = new ServerAdapter(cfg.vault)
-    set({ adapter, vaultPath: cfg.vault, isLoading: false })
-    await get().refreshTree()
     const ignoredPatterns = await loadUserIgnorePatterns(adapter, cfg.vault)
-    set({ ignoredPatterns })
+    set({ adapter, vaultPath: cfg.vault, isLoading: false, ignoredPatterns })
+    await get().refreshTree()
     _attachWatcher('server', adapter, cfg.vault, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -206,10 +205,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     browserAdapter.root = handle
     browserAdapter.rootName = handle.name
 
-    set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath, mode: 'browser' })
-    await get().refreshTree()
     const ignoredPatterns = await loadUserIgnorePatterns(browserAdapter as unknown as VaultAdapter, vaultPath)
-    set({ ignoredPatterns })
+    set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath, mode: 'browser', ignoredPatterns })
+    await get().refreshTree()
     _attachWatcher('browser', browserAdapter as unknown as VaultAdapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -235,10 +233,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     browserAdapter.root = handle
     browserAdapter.rootName = handle.name
 
-    set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath: handle.name, mode: 'browser' })
-    await get().refreshTree()
     const ignoredPatterns = await loadUserIgnorePatterns(browserAdapter as unknown as VaultAdapter, handle.name)
-    set({ ignoredPatterns })
+    set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath: handle.name, mode: 'browser', ignoredPatterns })
+    await get().refreshTree()
     _attachWatcher('browser', browserAdapter as unknown as VaultAdapter, handle.name, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
     return true
@@ -258,10 +255,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   async initDropboxMode(auth) {
     const adapter = new DropboxAdapter(auth)
     const vaultPath = adapter.vaultLabel
-    set({ adapter, vaultPath, mode: 'dropbox' })
-    await get().refreshTree()
     const ignoredPatterns = await loadUserIgnorePatterns(adapter, vaultPath)
-    set({ ignoredPatterns })
+    set({ adapter, vaultPath, mode: 'dropbox', ignoredPatterns })
+    await get().refreshTree()
     _attachWatcher('dropbox', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -273,10 +269,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     if (!vaultPath) return
     localStorage.setItem('electronVaultV1', vaultPath)
     setElectronVaultRoot(vaultPath)
-    set({ adapter, vaultPath, mode: 'electron' })
-    await get().refreshTree()
     const ignoredPatterns = await loadUserIgnorePatterns(adapter, vaultPath)
-    set({ ignoredPatterns })
+    set({ adapter, vaultPath, mode: 'electron', ignoredPatterns })
+    await get().refreshTree()
     _attachWatcher('electron', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
@@ -288,10 +283,9 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       const { createVaultAdapter, setElectronVaultRoot } = await import('@/adapters')
       const adapter = createVaultAdapter()
       setElectronVaultRoot(saved)
-      set({ adapter, vaultPath: saved, mode: 'electron' })
-      await get().refreshTree()
       const ignoredPatterns = await loadUserIgnorePatterns(adapter, saved)
-      set({ ignoredPatterns })
+      set({ adapter, vaultPath: saved, mode: 'electron', ignoredPatterns })
+      await get().refreshTree()
       _attachWatcher('electron', adapter, saved, get, set)
       void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
       return true

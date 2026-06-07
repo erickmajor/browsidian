@@ -145,7 +145,7 @@ export function GraphView({ onClose }: GraphViewProps) {
       }
     })
     return () => { cancelled = true; cleanupRef.current?.(); cleanupRef.current = null }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ignoredPatterns]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Search: fade non-matching nodes
   useEffect(() => {
