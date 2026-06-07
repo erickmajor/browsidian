@@ -21,6 +21,7 @@ export function isIgnoredByUser(relativePath: string, patterns: string[]): boole
   const normalized = relativePath.replace(/\\/g, '/')
   const parts = normalized.split('/')
   return patterns.some((pattern) => {
+    if (!pattern) return false
     try {
       const isMatch = picomatch(pattern, { dot: true })
       return isMatch(normalized) || parts.some((part) => isMatch(part))
