@@ -92,6 +92,16 @@ export function EditorArea() {
     }
   }, [activeFile?.path])
 
+  // Sync editor doc when content is reloaded externally (silent reload when !isDirty)
+  useEffect(() => {
+    if (isDirty) return
+    const view = viewRef.current
+    if (!view) return
+    if (view.state.doc.toString() !== content) {
+      view.setState(makeState(content, setContent, saveFile))
+    }
+  }, [content, isDirty])
+
   useEffect(() => {
     if (!showPreview && viewRef.current) {
       viewRef.current.requestMeasure()
