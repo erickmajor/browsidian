@@ -23,6 +23,8 @@ interface UIStore {
   contextMenuPath: string | null
   contextMenuPos: { x: number; y: number } | null
   graphOpen: boolean
+  externalChangeFile: string | null
+  externalChangeDeleted: boolean
 
   setStatus(msg: string): void
   setTheme(theme: Theme): void
@@ -31,6 +33,8 @@ interface UIStore {
   showContextMenu(path: string, x: number, y: number): void
   hideContextMenu(): void
   setGraphOpen(v: boolean): void
+  setExternalChangeFile(path: string | null): void
+  setExternalChangeDeleted(deleted: boolean): void
 }
 
 export const useUIStore = create<UIStore>((set, get) => {
@@ -44,6 +48,8 @@ export const useUIStore = create<UIStore>((set, get) => {
     contextMenuPath: null,
     contextMenuPos: null,
     graphOpen: false,
+    externalChangeFile: null,
+    externalChangeDeleted: false,
 
     setStatus(msg) { set({ status: msg }) },
 
@@ -67,5 +73,8 @@ export const useUIStore = create<UIStore>((set, get) => {
     },
 
     setGraphOpen(v) { set({ graphOpen: v }) },
+
+    setExternalChangeFile(path) { set({ externalChangeFile: path }) },
+    setExternalChangeDeleted(deleted) { set({ externalChangeDeleted: deleted }) },
   }
 })
