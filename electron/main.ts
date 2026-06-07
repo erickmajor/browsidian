@@ -6,6 +6,7 @@ import * as path from 'path'
 const DEV = process.env.NODE_ENV === 'development'
 
 let _vaultFsWatcher: fsSync.FSWatcher | null = null
+let _watchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 // ─── Janela ───────────────────────────────────────────────────────────────────
 
@@ -120,11 +121,10 @@ ipcMain.on('vault:watch:start', (e, vaultPath: string) => {
   _vaultFsWatcher = null
   const win = BrowserWindow.fromWebContents(e.sender)
   if (!win) return
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null
   try {
     _vaultFsWatcher = fsSync.watch(vaultPath, { recursive: true }, (eventType, filename) => {
-      if (debounceTimer) clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(() => {
+      if (_watchDebounceTimer) clearTimeout(_watchDebounceTimer)
+      _watchDebounceTimer = setTimeout(() => {
         win.webContents.send('vault:changed', { eventType, filename })
       }, 500)
     })
@@ -135,6 +135,7 @@ ipcMain.on('vault:watch:start', (e, vaultPath: string) => {
 })
 
 ipcMain.on('vault:watch:stop', () => {
+  if (_watchDebounceTimer) { clearTimeout(_watchDebounceTimer); _watchDebounceTimer = null }
   _vaultFsWatcher?.close()
   _vaultFsWatcher = null
 })
