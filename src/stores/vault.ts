@@ -4,6 +4,9 @@ import { ServerAdapter } from '@/adapters/server'
 import { DemoAdapter } from '@/adapters/demo'
 import { DropboxAdapter } from '@/adapters/dropbox'
 import type { DropboxAuth } from '@/adapters/dropbox'
+import { createWatcher } from '@/watchers'
+import type { VaultWatcher } from '@/watchers'
+import { useUIStore } from '@/stores/ui'
 
 export type VaultMode = 'server' | 'browser' | 'demo' | 'dropbox' | 'electron'
 
@@ -102,6 +105,7 @@ interface VaultStore {
   selectedDir: string | null
   fileIndex:  Map<string, string[]> | null
   _autosaveTimer: ReturnType<typeof setTimeout> | null
+  _watcher: VaultWatcher | null
 
   // Vault init
   initServerMode(): Promise<void>
@@ -146,6 +150,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
   selectedDir: null,
   fileIndex:   null,
   _autosaveTimer: null,
+  _watcher: null,
 
   // ─── Init modes ─────────────────────────────────────────────────────────────
 
@@ -160,6 +165,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const adapter = new ServerAdapter(cfg.vault)
     set({ adapter, vaultPath: cfg.vault, isLoading: false })
     await get().refreshTree()
+    _attachWatcher('server', adapter, cfg.vault, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
 
@@ -193,6 +199,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
     set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath, mode: 'browser' })
     await get().refreshTree()
+    _attachWatcher('browser', browserAdapter as unknown as VaultAdapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
 
@@ -219,6 +226,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
     set({ adapter: browserAdapter as unknown as VaultAdapter, vaultPath: handle.name, mode: 'browser' })
     await get().refreshTree()
+    _attachWatcher('browser', browserAdapter as unknown as VaultAdapter, handle.name, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
     return true
   },
@@ -228,6 +236,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const vaultPath = DemoAdapter.VAULT_NAME
     set({ adapter, vaultPath, mode: 'demo' })
     await get().refreshTree()
+    _attachWatcher('demo', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
     const welcomeFile: VaultFile = { name: 'Welcome.md', path: 'Welcome.md', isDir: false }
     await get().openFile(welcomeFile).catch(() => {})
@@ -238,6 +247,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     const vaultPath = adapter.vaultLabel
     set({ adapter, vaultPath, mode: 'dropbox' })
     await get().refreshTree()
+    _attachWatcher('dropbox', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
 
@@ -250,6 +260,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     setElectronVaultRoot(vaultPath)
     set({ adapter, vaultPath, mode: 'electron' })
     await get().refreshTree()
+    _attachWatcher('electron', adapter, vaultPath, get, set)
     void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
   },
 
@@ -262,6 +273,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
       setElectronVaultRoot(saved)
       set({ adapter, vaultPath: saved, mode: 'electron' })
       await get().refreshTree()
+      _attachWatcher('electron', adapter, saved, get, set)
       void import('@/plugins/loader').then(m => m.populateMetadataCache()).catch(e => console.error('[MetadataCache] populate failed', e))
       return true
     } catch {
@@ -282,10 +294,14 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     await idbStore.clear().catch(() => {})
     localStorage.removeItem('electronVaultV1')
     localStorage.removeItem('lastActiveFileV1')
+    get()._watcher?.stop()
+    useUIStore.getState().setExternalChangeFile(null)
+    useUIStore.getState().setExternalChangeDeleted(false)
     set({
       mode: 'server', adapter: null, vaultPath: null,
       tree: [], activeFile: null, content: '',
       isDirty: false, showPreview: true, selectedDir: null, fileIndex: null,
+      _watcher: null,
     })
     await get().initServerMode()
   },
@@ -320,6 +336,8 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
     if (!adapter || !activeFile) return
     await adapter.writeFile(activeFile.path, content)
     set({ isDirty: false, showPreview: true })
+    useUIStore.getState().setExternalChangeFile(null)
+    useUIStore.getState().setExternalChangeDeleted(false)
     if (activeFile.name.toLowerCase().endsWith('.md')) {
       void import('@/plugins/loader').then(m => m.metadataCache.updateFile(activeFile, content)).catch(() => {})
     }
@@ -451,6 +469,45 @@ function parentOf(p: string): string {
   return idx === -1 ? '' : s.slice(0, idx)
 }
 
+function _attachWatcher(
+  mode: VaultMode,
+  adapter: VaultAdapter,
+  vaultPath: string,
+  get: () => VaultStore,
+  set: (s: Partial<VaultStore>) => void,
+): void {
+  // Stop previous watcher if running
+  get()._watcher?.stop()
+
+  const watcher = createWatcher(mode, adapter, vaultPath)
+
+  if (watcher) {
+    watcher.onTreeChanged(async () => {
+      await get().refreshTree()
+      const { activeFile, tree } = get()
+      if (activeFile && !fileExistsInTree(activeFile.path, tree)) {
+        useUIStore.getState().setExternalChangeFile(activeFile.path)
+        useUIStore.getState().setExternalChangeDeleted(true)
+      }
+    })
+
+    watcher.onFileChanged((path) => {
+      const { activeFile, isDirty } = get()
+      if (!activeFile || activeFile.path !== path) return
+      if (isDirty) {
+        useUIStore.getState().setExternalChangeFile(path)
+        useUIStore.getState().setExternalChangeDeleted(false)
+      } else {
+        void get().openFile(activeFile)  // silent reload
+      }
+    })
+
+    watcher.start()
+  }
+
+  set({ _watcher: watcher ?? null })
+}
+
 async function buildVaultTree(
   adapter: VaultAdapter,
   dirPath: string,
@@ -468,4 +525,12 @@ async function buildVaultTree(
   return files.sort((a, b) =>
     a.isDir !== b.isDir ? (a.isDir ? -1 : 1) : a.name.localeCompare(b.name)
   )
+}
+
+function fileExistsInTree(filePath: string, tree: VaultFile[]): boolean {
+  for (const f of tree) {
+    if (!f.isDir && f.path === filePath) return true
+    if (f.isDir && f.children && fileExistsInTree(filePath, f.children)) return true
+  }
+  return false
 }
