@@ -25,6 +25,7 @@ export interface VaultAdapter {
   deleteFile(filePath: string): Promise<void>
   renameFile(oldPath: string, newPath: string): Promise<void>
   mkdir?(dirPath: string): Promise<void>
+  getLastModified?(filePath: string): Promise<number | null>
 }
 
 // ─── Electron ────────────────────────────────────────────────────────────────
@@ -115,6 +116,16 @@ class WebAdapter implements VaultAdapter {
     const content = await this.readFile(oldPath)
     await this.writeFile(newPath, content)
     await this.deleteFile(oldPath)
+  }
+
+  async getLastModified(filePath: string): Promise<number | null> {
+    try {
+      const fh = await this._file(filePath)
+      const file = await fh.getFile()
+      return file.lastModified
+    } catch {
+      return null
+    }
   }
 
   // ── internos ──
