@@ -7,7 +7,7 @@ import type { DropboxAuth } from '@/adapters/dropbox'
 import { createWatcher } from '@/watchers'
 import type { VaultWatcher } from '@/watchers'
 import { useUIStore } from '@/stores/ui'
-import { loadUserIgnorePatterns } from '@/lib/obsidianConfig'
+import { loadUserIgnorePatterns, isIgnoredByUser } from '@/lib/obsidianConfig'
 
 export type VaultMode = 'server' | 'browser' | 'demo' | 'dropbox' | 'electron'
 
@@ -73,14 +73,18 @@ const idbStore = (() => {
 
 async function buildFileIndex(
   adapter: VaultAdapter,
-  rootPath: string
+  rootPath: string,
+  ignoredPatterns: string[]
 ): Promise<Map<string, string[]>> {
   const index = new Map<string, string[]>()
+  const normRoot = rootPath.replace(/[/\\]+$/, '')
   const walk = async (dir: string) => {
     const entries = await adapter.listFiles(dir)
     for (const e of entries) {
       if (e.isDir) { await walk(e.path); continue }
       if (!e.name.toLowerCase().endsWith('.md')) continue
+      const rel = e.path.replace(normRoot, '').replace(/^[/\\]+/, '').replace(/\\/g, '/')
+      if (isIgnoredByUser(rel, ignoredPatterns)) continue
       const key = e.name.toLowerCase().replace(/\.md$/, '')
       const existing = index.get(key)
       if (existing) existing.push(e.path)
@@ -447,7 +451,7 @@ export const useVaultStore = create<VaultStore>((set, get) => ({
 
       let { fileIndex } = get()
       if (!fileIndex) {
-        fileIndex = await buildFileIndex(adapter, vaultPath)
+        fileIndex = await buildFileIndex(adapter, vaultPath, get().ignoredPatterns)
         set({ fileIndex })
       }
       const key = t.toLowerCase().replace(/\.md$/, '')
