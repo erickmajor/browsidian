@@ -1127,3 +1127,29 @@ html, body, #root {
   padding: 4px 8px; font-size: 11px; color: var(--text);
   pointer-events: none; white-space: nowrap;
 }
+
+/* ─── External change toast ──────────────────────────────────────────────── */
+.ext-change-toast {
+  position: fixed;
+  bottom: 18px; left: 18px;
+  z-index: 9998;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 10px 14px;
+  font-size: 12px;
+  box-shadow: 0 4px 20px var(--shadow);
+  animation: toastIn 0.2s ease;
+  max-width: 340px;
+  pointer-events: auto;
+}
+.ext-change-toast--deleted { border-color: var(--danger); }
+.ext-change-icon { font-size: 14px; flex-shrink: 0; }
+.ext-change-body { flex: 1; min-width: 0; }
+.ext-change-title { color: var(--text); font-weight: 500; }
+.ext-change-path {
+  color: var(--text-muted); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ext-change-reload { margin-left: 8px; flex-shrink: 0; }

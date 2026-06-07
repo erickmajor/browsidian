@@ -11,6 +11,7 @@ import { PromptDialog } from '@/components/Dialogs/PromptDialog'
 import { DropboxPathPicker } from '@/components/Dialogs/DropboxPathPicker'
 import { PluginManager } from '@/components/PluginManager'
 import { GraphView } from '@/components/GraphView'
+import { ExternalChangeToast } from '@/components/ExternalChangeToast'
 import { loadEnabledPlugins, unloadPlugin } from '@/plugins/loader'
 import { usePluginStore } from '@/plugins/store'
 
@@ -235,6 +236,7 @@ export default function App() {
       <ContextMenu />
       <PluginManager />
       {graphOpen && <GraphView onClose={() => setGraphOpen(false)} />}
+      <ExternalChangeToast />
 
       <PromptDialog
         open={prompt.open}
