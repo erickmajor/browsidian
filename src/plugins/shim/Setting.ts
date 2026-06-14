@@ -75,6 +75,7 @@ export class ButtonComponent extends BaseInputComponent<MouseEvent> {
   setWarning(): this { this.buttonEl.style.color = 'var(--danger, #e55)'; return this }
   setDisabled(d: boolean): this { this.buttonEl.disabled = d; return this }
   setIcon(_icon: string): this { return this }
+  setTooltip(tooltip: string): this { this.buttonEl.title = tooltip; return this }
   onClick(cb: (e: MouseEvent) => void): this { this.buttonEl.addEventListener('click', cb); return this }
 }
 

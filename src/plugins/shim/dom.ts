@@ -166,8 +166,16 @@ export function installDomAugmentations(): void {
   }
 
   // Obsidian DOM augmentations used by plugins for visibility/lifecycle checks
+  ;(HTMLElement.prototype as any).hide = function(): void {
+    this.style.display = 'none'
+  }
+
+  ;(HTMLElement.prototype as any).show = function(): void {
+    this.style.display = ''
+  }
+
   ;(HTMLElement.prototype as any).isShown = function(): boolean {
-    return this.isConnected
+    return this.isConnected && this.style.display !== 'none'
   }
 
   ;(HTMLElement.prototype as any).onNodeInserted = function(cb: () => void): () => void {

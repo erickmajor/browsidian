@@ -52,6 +52,7 @@ export class Workspace {
   on(event: string, callback: WorkspaceListener): { unsubscribe: () => void } {
     if (!this._listeners.has(event)) this._listeners.set(event, new Set())
     this._listeners.get(event)!.add(callback)
+    console.debug(`[workspace] registered listener for '${event}' (total: ${this._listeners.get(event)!.size})`)
     return { unsubscribe: () => this._listeners.get(event)?.delete(callback) }
   }
 
@@ -60,15 +61,20 @@ export class Workspace {
   }
 
   _emit(event: string, ...args: any[]): void {
-    this._listeners.get(event)?.forEach(cb => {
+    const listeners = this._listeners.get(event)
+    console.debug(`[workspace] _emit '${event}' → ${listeners?.size ?? 0} listener(s)`)
+    listeners?.forEach(cb => {
       try { cb(...args) } catch (err) {
         console.warn(`[workspace:${event}] listener error:`, err)
       }
     })
   }
 
-  // Called by many plugins after their setup — invoke immediately since there's no loading phase
-  onLayoutReady(cb: () => void): void { cb() }
+  // Defer to next macrotask so React has committed pending renders before plugins query the DOM
+  onLayoutReady(cb: () => void): void {
+    console.debug('[workspace] onLayoutReady — scheduling callback')
+    setTimeout(cb, 0)
+  }
 
   getRightLeaf(_create: boolean): WorkspaceLeaf { return new WorkspaceLeaf() }
   getLeftLeaf(_create: boolean): WorkspaceLeaf  { return new WorkspaceLeaf() }

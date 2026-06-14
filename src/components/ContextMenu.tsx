@@ -32,6 +32,7 @@ export function ContextMenu() {
     : new TFile(contextMenuPath)
   obsidianApp.workspace._emit('file-menu', menu, obsFile, 'more-options', null)
   const pluginItems = menu.getItems()
+  console.debug(`[ContextMenu] '${contextMenuPath}' isDir=${contextMenuIsDir} → ${pluginItems.length} plugin item(s):`, pluginItems.map(i => i.title))
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()

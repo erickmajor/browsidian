@@ -462,7 +462,9 @@ export async function loadEnabledPlugins(): Promise<void> {
       const loaded = await loadPlugin(dir, manifest)
       setLoaded(manifest.id, loaded)
       setEnabled(manifest.id, true)
+      console.debug(`[loader] plugin '${manifest.id}' loaded successfully`)
     } catch (err) {
+      console.error(`[loader] plugin '${manifest.id}' FAILED to load:`, (err as Error).message)
       setLoaded(manifest.id, {
         id: manifest.id, manifest, instance: null,
         error: (err as Error).message,
