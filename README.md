@@ -44,6 +44,7 @@ It supports four working modes:
 - **Graph view:** Click the graph icon in the status bar to open a full-screen force-directed graph showing wikilink connections and shared tags between markdown files. Supports zoom, pan, drag, node click to open file, and search/filter.
 - **File watching:** The app detects external changes to vault files without requiring a restart. In Electron mode, native `fs.watch` pushes events instantly. In Server mode, the server pushes changes via SSE. In Browser mode, the app polls every 15 s using the File System Access API. The file tree refreshes automatically. If the active file is modified externally while you have unsaved edits, a toast prompts you to reload or keep your version.
 - **Obsidian ignore filters:** Patterns configured in `.obsidian/app.json` (`userIgnoreFilters`) are respected — matching files are excluded from wikilink resolution, graph view, and MetadataCache while still appearing in the file tree.
+- **Plugin context menus:** Sidebar tree items now carry `data-path` attributes, and a `file-menu` workspace event fires on right-click — enabling plugins like **OA-file-hider** to contribute "Hide/Unhide" menu items and manipulate sidebar visibility via the standard Obsidian plugin API.
 
 ## Requirements
 
