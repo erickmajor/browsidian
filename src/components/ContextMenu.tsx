@@ -5,7 +5,7 @@ import { obsidianApp } from '@/plugins/loader'
 import { Menu, TFile, TFolder } from '@/plugins/shim'
 
 export function ContextMenu() {
-  const { tree, deleteFile }   = useVaultStore()
+  const { tree, deleteFile, vaultPath } = useVaultStore()
   const {
     contextMenuPath, contextMenuPos, contextMenuIsDir,
     hideContextMenu, setStatus,
@@ -27,12 +27,16 @@ export function ContextMenu() {
 
   // Collect plugin contributions synchronously — listeners are always sync
   const menu = new Menu()
+  // Plugins expect vault-relative paths with forward slashes (Obsidian convention)
+  const obsRelPath = vaultPath && contextMenuPath.startsWith(vaultPath)
+    ? contextMenuPath.slice(vaultPath.length + 1).replace(/\\/g, '/')
+    : contextMenuPath
   const obsFile = contextMenuIsDir
-    ? new TFolder(contextMenuPath)
-    : new TFile(contextMenuPath)
+    ? new TFolder(obsRelPath)
+    : new TFile(obsRelPath)
   obsidianApp.workspace._emit('file-menu', menu, obsFile, 'more-options', null)
   const pluginItems = menu.getItems()
-  console.debug(`[ContextMenu] '${contextMenuPath}' isDir=${contextMenuIsDir} → ${pluginItems.length} plugin item(s):`, pluginItems.map(i => i.title))
+  console.debug(`[ContextMenu] '${obsRelPath}' isDir=${contextMenuIsDir} → ${pluginItems.length} plugin item(s):`, pluginItems.map(i => i.title))
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()

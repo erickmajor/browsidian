@@ -92,6 +92,7 @@ export function Sidebar({ onNewFile, onNewFolder, onDisconnect }: SidebarProps) 
             onDragStart={(path) => setDragging(path)}
             onDrop={handleDrop}
             onContextMenu={(path, x, y, isDir) => showContextMenu(path, x, y, isDir)}
+            vaultPath={vaultPath}
           />
         ))}
       </div>
@@ -111,6 +112,7 @@ interface TreeNodeProps {
   onDragStart:  (path: string) => void
   onDrop:       (targetDir: string, e: React.DragEvent) => Promise<void>
   onContextMenu:(path: string, x: number, y: number, isDir: boolean) => void
+  vaultPath:    string
 }
 
 function hasMatch(item: VaultFile, passesFilter: (e: VaultFile) => boolean): boolean {
@@ -122,10 +124,13 @@ function hasMatch(item: VaultFile, passesFilter: (e: VaultFile) => boolean): boo
 function TreeNode({
   item, depth, activeFile, selectedDir, filter, passesFilter,
   onOpen, onSelectDir, onDragStart, onDrop, onContextMenu,
+  vaultPath,
 }: TreeNodeProps) {
   const [open, setOpen] = useState(depth === 0)
   const [dropTarget, setDropTarget] = useState(false)
   const indent = depth * 18
+  // Vault-relative path with forward slashes (matches Obsidian's convention)
+  const relPath = item.path.slice(vaultPath.length + 1).replace(/\\/g, '/')
 
   if (filter && !hasMatch(item, passesFilter)) return null
 
@@ -135,7 +140,7 @@ function TreeNode({
       <div>
         <div
           className={`tree-item${isSelected ? ' selected' : ''}${dropTarget ? ' drop-target' : ''}`}
-          data-path={item.path}
+          data-path={relPath}
           style={{ paddingLeft: 8 + indent }}
           onClick={() => { onSelectDir(item.path) }}
           onDragOver={(e) => { e.preventDefault(); setDropTarget(true) }}
@@ -167,6 +172,7 @@ function TreeNode({
                 onDragStart={onDragStart}
                 onDrop={onDrop}
                 onContextMenu={onContextMenu}
+                vaultPath={vaultPath}
               />
             ))}
           </div>
@@ -183,7 +189,7 @@ function TreeNode({
     <div>
       <div
         className={`tree-item${isActive ? ' active' : ''}`}
-        data-path={item.path}
+        data-path={relPath}
         style={{ paddingLeft: 8 + indent }}
         draggable
         onClick={() => void onOpen(item)}
