@@ -1,10 +1,15 @@
 import { useEffect } from 'react'
 import { useVaultStore } from '@/stores/vault'
 import { useUIStore } from '@/stores/ui'
+import { obsidianApp } from '@/plugins/loader'
+import { Menu, TFile, TFolder } from '@/plugins/shim'
 
 export function ContextMenu() {
-  const { tree, deleteFile } = useVaultStore()
-  const { contextMenuPath, contextMenuPos, hideContextMenu, setStatus } = useUIStore()
+  const { tree, deleteFile }   = useVaultStore()
+  const {
+    contextMenuPath, contextMenuPos, contextMenuIsDir,
+    hideContextMenu, setStatus,
+  } = useUIStore()
 
   useEffect(() => {
     const close = () => hideContextMenu()
@@ -19,6 +24,14 @@ export function ContextMenu() {
   }, [hideContextMenu])
 
   if (!contextMenuPath || !contextMenuPos) return null
+
+  // Collect plugin contributions synchronously — listeners are always sync
+  const menu = new Menu()
+  const obsFile = contextMenuIsDir
+    ? new TFolder(contextMenuPath)
+    : new TFile(contextMenuPath)
+  obsidianApp.workspace._emit('file-menu', menu, obsFile, 'more-options', null)
+  const pluginItems = menu.getItems()
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -49,7 +62,7 @@ export function ContextMenu() {
 
   const padding = 8
   const left = Math.min(contextMenuPos.x, window.innerWidth - 200 - padding)
-  const top  = Math.min(contextMenuPos.y, window.innerHeight - 60 - padding)
+  const top  = Math.min(contextMenuPos.y, window.innerHeight - 120 - padding)
 
   return (
     <div
@@ -57,6 +70,16 @@ export function ContextMenu() {
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
     >
+      {pluginItems.map((item, i) => (
+        <button
+          key={i}
+          className={`context-item${item.warning ? ' danger' : ''}`}
+          disabled={item.disabled}
+          onClick={(e) => { hideContextMenu(); item.onClick(e.nativeEvent) }}
+        >
+          {item.title}
+        </button>
+      ))}
       <button className="context-item danger" onClick={handleDelete}>
         Delete
       </button>
