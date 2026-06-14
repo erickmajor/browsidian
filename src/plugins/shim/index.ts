@@ -4,7 +4,8 @@ export { Plugin }            from './Plugin'
 export type { Command }      from './Plugin'
 export { Vault, VaultAdapterShim } from './Vault'
 export { Workspace, WorkspaceLeaf, Scope, WorkspaceSplit } from './Workspace'
-export { Notice, Modal, SuggestModal, FuzzySuggestModal } from './components'
+export { Notice, Modal, SuggestModal, FuzzySuggestModal, Menu } from './components'
+export type { MenuItemData } from './components'
 export {
   Setting, PluginSettingTab,
   TextComponent, TextAreaComponent, ToggleComponent, ButtonComponent, DropdownComponent,
@@ -388,51 +389,6 @@ export class MetadataCache {
   }
 }
 
-export class Menu {
-  private _items: Array<{ text: string; cb: () => void }> = []
-  private _el: HTMLElement | null = null
-
-  addItem(cb: (item: MenuItem) => void): this {
-    const item = new MenuItem(); cb(item)
-    this._items.push({ text: item._text, cb: item._cb ?? (() => {}) })
-    return this
-  }
-
-  addSeparator(): this { return this }
-
-  showAtMouseEvent(e: MouseEvent): void { this._show(e.clientX, e.clientY) }
-  showAtPosition(pos: { x: number; y: number }): void { this._show(pos.x, pos.y) }
-
-  hide(): void { this._el?.remove(); this._el = null }
-
-  private _show(x: number, y: number): void {
-    this.hide()
-    const el = document.createElement('div')
-    el.className = 'context-menu plugin-menu'
-    el.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:9999`
-    for (const item of this._items) {
-      const div = document.createElement('div')
-      div.className = 'context-item'
-      div.textContent = item.text
-      div.addEventListener('click', () => { item.cb(); this.hide() })
-      el.appendChild(div)
-    }
-    document.body.appendChild(el)
-    this._el = el
-    setTimeout(() => document.addEventListener('click', () => this.hide(), { once: true }), 0)
-  }
-}
-
-export class MenuItem {
-  _text = ''; _icon?: string; _cb?: () => void
-  setTitle(t: string): this { this._text = t; return this }
-  setIcon(i: string): this { this._icon = i; return this }
-  onClick(cb: () => void): this { this._cb = cb; return this }
-  setSection(_s: string): this { return this }
-  setDisabled(_d: boolean): this { return this }
-  setChecked(_c: boolean): this { return this }
-  setIsLabel(_l: boolean): this { return this }
-}
 
 export const Keymap = {
   isModEvent: (_e: MouseEvent | KeyboardEvent) => false,

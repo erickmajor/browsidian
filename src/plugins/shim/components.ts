@@ -113,3 +113,52 @@ export class FuzzySuggestModal<T> extends SuggestModal<T> {
     el.textContent = this.getItemText(item)
   }
 }
+
+class MenuItem {
+  private _title    = ''
+  private _icon     = ''
+  private _disabled = false
+  private _warning  = false
+  private _cb: (e: MouseEvent) => void = () => {}
+  dom: HTMLElement = document.createElement('div')
+
+  setTitle(title: string): this             { this._title = title; return this }
+  setIcon(icon: string): this               { this._icon = icon; return this }
+  setSection(_section: string): this        { return this }
+  setDisabled(v: boolean): this             { this._disabled = v; return this }
+  setChecked(_v: boolean): this             { return this }
+  setWarning(v: boolean): this              { this._warning = v; return this }
+  setIsLabel(_v: boolean): this             { return this }
+  onClick(cb: (e: MouseEvent) => void): this { this._cb = cb; return this }
+
+  _data() {
+    return {
+      title:    this._title,
+      icon:     this._icon,
+      disabled: this._disabled,
+      warning:  this._warning,
+      onClick:  this._cb,
+    }
+  }
+}
+
+export type MenuItemData = ReturnType<MenuItem['_data']>
+
+export class Menu {
+  private _items: MenuItemData[] = []
+
+  addItem(fn: (item: MenuItem) => void): this {
+    const item = new MenuItem()
+    fn(item)
+    this._items.push(item._data())
+    return this
+  }
+
+  getItems(): MenuItemData[]                          { return this._items }
+  addSeparator(): this                                { return this }
+  setNoIcon(): this                                   { return this }
+  hide(): void                                        {}
+  close(): void                                       {}
+  showAtMouseEvent(_e: MouseEvent): this              { return this }
+  showAtPosition(_pos: { x: number; y: number }): this { return this }
+}
