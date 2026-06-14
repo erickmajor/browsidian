@@ -22,6 +22,7 @@ interface UIStore {
   draggingPath: string | null
   contextMenuPath: string | null
   contextMenuPos: { x: number; y: number } | null
+  contextMenuIsDir: boolean
   graphOpen: boolean
   externalChangeFile: string | null
   externalChangeDeleted: boolean
@@ -30,7 +31,7 @@ interface UIStore {
   setTheme(theme: Theme): void
   toggleTheme(): void
   setDragging(path: string | null): void
-  showContextMenu(path: string, x: number, y: number): void
+  showContextMenu(path: string, x: number, y: number, isDir: boolean): void
   hideContextMenu(): void
   setGraphOpen(v: boolean): void
   setExternalChangeFile(path: string | null): void
@@ -47,6 +48,7 @@ export const useUIStore = create<UIStore>((set, get) => {
     draggingPath: null,
     contextMenuPath: null,
     contextMenuPos: null,
+    contextMenuIsDir: false,
     graphOpen: false,
     externalChangeFile: null,
     externalChangeDeleted: false,
@@ -64,12 +66,12 @@ export const useUIStore = create<UIStore>((set, get) => {
 
     setDragging(path) { set({ draggingPath: path }) },
 
-    showContextMenu(path, x, y) {
-      set({ contextMenuPath: path, contextMenuPos: { x, y } })
+    showContextMenu(path, x, y, isDir) {
+      set({ contextMenuPath: path, contextMenuPos: { x, y }, contextMenuIsDir: isDir })
     },
 
     hideContextMenu() {
-      set({ contextMenuPath: null, contextMenuPos: null })
+      set({ contextMenuPath: null, contextMenuPos: null, contextMenuIsDir: false })
     },
 
     setGraphOpen(v) { set({ graphOpen: v }) },

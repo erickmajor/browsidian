@@ -1,12 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useVaultStore } from '@/stores/vault'
 import { useUIStore } from '@/stores/ui'
 import type { VaultFile } from '@/stores/vault'
-
-function parentOf(p: string): string {
-  const idx = p.lastIndexOf('/')
-  return idx === -1 ? '' : p.slice(0, idx)
-}
 
 interface SidebarProps {
   onNewFile: () => void
@@ -96,7 +91,7 @@ export function Sidebar({ onNewFile, onNewFolder, onDisconnect }: SidebarProps) 
             onSelectDir={setSelectedDir}
             onDragStart={(path) => setDragging(path)}
             onDrop={handleDrop}
-            onContextMenu={(path, x, y) => showContextMenu(path, x, y)}
+            onContextMenu={(path, x, y, isDir) => showContextMenu(path, x, y, isDir)}
           />
         ))}
       </div>
@@ -115,7 +110,7 @@ interface TreeNodeProps {
   onSelectDir:  (dir: string) => void
   onDragStart:  (path: string) => void
   onDrop:       (targetDir: string, e: React.DragEvent) => Promise<void>
-  onContextMenu:(path: string, x: number, y: number) => void
+  onContextMenu:(path: string, x: number, y: number, isDir: boolean) => void
 }
 
 function hasMatch(item: VaultFile, passesFilter: (e: VaultFile) => boolean): boolean {
@@ -137,14 +132,16 @@ function TreeNode({
   if (item.isDir) {
     const isSelected = item.path === (selectedDir ?? '')
     return (
-      <>
+      <div>
         <div
           className={`tree-item${isSelected ? ' selected' : ''}${dropTarget ? ' drop-target' : ''}`}
+          data-path={item.path}
           style={{ paddingLeft: 8 + indent }}
           onClick={() => { onSelectDir(item.path) }}
           onDragOver={(e) => { e.preventDefault(); setDropTarget(true) }}
           onDragLeave={() => setDropTarget(false)}
           onDrop={async (e) => { setDropTarget(false); await onDrop(item.path, e) }}
+          onContextMenu={(e) => { e.preventDefault(); onContextMenu(item.path, e.clientX, e.clientY, true) }}
         >
           <span
             className="icon"
@@ -174,7 +171,7 @@ function TreeNode({
             ))}
           </div>
         )}
-      </>
+      </div>
     )
   }
 
@@ -183,17 +180,20 @@ function TreeNode({
   const isActive = item.path === activeFile?.path
 
   return (
-    <div
-      className={`tree-item${isActive ? ' active' : ''}`}
-      style={{ paddingLeft: 8 + indent }}
-      draggable
-      onClick={() => void onOpen(item)}
-      onDragStart={() => onDragStart(item.path)}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu(item.path, e.clientX, e.clientY) }}
-      title={item.name}
-    >
-      <span className="icon" style={{ fontSize: 9 }}>◆</span>
-      <span className="name">{item.name.replace(/\.md$/, '')}</span>
+    <div>
+      <div
+        className={`tree-item${isActive ? ' active' : ''}`}
+        data-path={item.path}
+        style={{ paddingLeft: 8 + indent }}
+        draggable
+        onClick={() => void onOpen(item)}
+        onDragStart={() => onDragStart(item.path)}
+        onContextMenu={(e) => { e.preventDefault(); onContextMenu(item.path, e.clientX, e.clientY, false) }}
+        title={item.name}
+      >
+        <span className="icon" style={{ fontSize: 9 }}>◆</span>
+        <span className="name">{item.name.replace(/\.md$/, '')}</span>
+      </div>
     </div>
   )
 }
